@@ -8,7 +8,6 @@ using std::option;
 using std::process;
 using std::result;
 using std::slice;
-using std::source;
 using std::test;
 using json;
 

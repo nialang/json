@@ -2,7 +2,6 @@
 // release, or writing fails, and where each limit in `Options` draws its line.
 
 using std::io;
-using std::math;
 using std::mem;
 using std::option;
 using std::process;
