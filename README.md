@@ -12,7 +12,7 @@ using json;
 
 fun port(allocator: &mut mem::Allocator, text: &[u8]) ?u64 {
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     if document.parse(allocator, text) is error! {
         return null;
     }

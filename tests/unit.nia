@@ -39,9 +39,9 @@ fun expectCode(
 fun readsObjectsAndArrays() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let input = b"{\"a\":[true,null,1],\"a\":\"last\",\"items\":[true,null,1]}";
     let object = test::expectSome(parsed(document, allocator, input).?.asObject()).?;
     test::expectEqual(object.len(), 3).?;
@@ -72,9 +72,9 @@ fun readsObjectsAndArrays() test::Error!() {
 fun followsPointers() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let top = parsed(document, allocator, b"{\"items\":[true,null,1],\"a/b~c\":2,\"\":{\"\":3}}").?;
     test::expectEqual(top.pointer(b"/items/2").?.kind(), json::Kind::Number).?;
     test::expectEqual(top.pointer(b"/a~1b~0c").?.kind(), json::Kind::Number).?;
@@ -91,9 +91,9 @@ fun followsPointers() test::Error!() {
 fun writesCompactAndPretty() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let nested = parsed(document, allocator, b" { \"a\" : { \"b\" : [ 1 , 2 ] } , \"empty\" : [ ] , \"o\" : { } } ").?;
     expectWritten(nested, json::WriteOptions::compact(), b"{\"a\":{\"b\":[1,2]},\"empty\":[],\"o\":{}}").?;
     expectWritten(
@@ -109,9 +109,9 @@ fun writesCompactAndPretty() test::Error!() {
 fun decodesStrings() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let clef = test::expectSome(parsed(document, allocator, b"\"\\uD834\\uDD1E\"").?.asString()).?;
     let clefUtf8: [u8; 4] = [0xf0, 0x9d, 0x84, 0x9e];
     test::expect(clef.equals(clefUtf8)).?;
@@ -143,7 +143,7 @@ fun expectUtf8(
     let decodedPrefixes: [usize; 3] = [0, 1, 0];
     for index in 0..3 {
         let mut input: std::ArrayList[u8] = .init();
-        defer { _ = input.deinit(allocator); };
+        defer _ = input.deinit(allocator);
         input.appendSlice(allocator, prefixes[index]).?;
         input.appendSlice(allocator, sequence).?;
         input.appendSlice(allocator, suffixes[index]).?;
@@ -186,9 +186,9 @@ fun expectUtf8Placed(
         for escape in 0..2 {
             for before in 0..20 {
                 let mut input: std::ArrayList[u8] = .init();
-                defer { _ = input.deinit(allocator); };
+                defer _ = input.deinit(allocator);
                 let mut expected: std::ArrayList[u8] = .init();
-                defer { _ = expected.deinit(allocator); };
+                defer _ = expected.deinit(allocator);
                 input.push(allocator, b'"').?;
                 input.appendSlice(allocator, escapes[escape]).?;
                 expected.appendSlice(allocator, decodedEscapes[escape]).?;
@@ -227,9 +227,9 @@ fun expectUtf8Placed(
 fun checksUtf8() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     // The edges of each well-formed range (RFC 3629, table 3-7).
     let valid: [&[u8]; 11] = [
         b"\xc2\x80", b"\xdf\xbf", b"\xe0\xa0\x80", b"\xe0\xbf\xbf", b"\xe1\x80\x80",
@@ -259,9 +259,9 @@ fun checksUtf8() test::Error!() {
 fun checksGrammarCorpus() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let valid: [&[u8]; 19] = [
         b"null", b"true", b"false", b"0", b"-0", b"1.25", b"1e+2",
         b"-0.0", b"1e-7", b"[]", b"{}", b"[1,{\"x\":[]}]",
@@ -300,9 +300,9 @@ fun checksGrammarCorpus() test::Error!() {
 fun reportsDiagnostics() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     match document.parse(allocator, b"[1,\n?]") {
         json::Error::Syntax(diagnostic)! => {
             test::expectEqual(diagnostic.code(), json::Code::UnexpectedToken).?;
@@ -338,7 +338,7 @@ fun reportsDiagnostics() test::Error!() {
 fun rejectsUseAfterDeinit() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
     document.deinit(allocator).?;
     let failure = test::expectError(document.parse(allocator, b"null")).?;
@@ -348,9 +348,9 @@ fun rejectsUseAfterDeinit() test::Error!() {
 fun convertsNumbers() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let exact = test::expectSome(parsed(document, allocator, b"9007199254740993").?.asNumber()).?;
     test::expect(exact.isInteger() and not exact.isNegative()).?;
     test::expectEqual(exact.toU64().?, 9007199254740993u64).?;
@@ -379,9 +379,9 @@ fun convertsNumbers() test::Error!() {
 fun writesStringsByTheirSpelling() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let cases: [(&[u8], &[u8]); 7] = [
         (b"\"plain\"", b"\"plain\""),
         // Past the short-string fast path, still without escapes.
@@ -405,13 +405,13 @@ fun writesStringsByTheirSpelling() test::Error!() {
 fun writesPastTheStage() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let filler = b"abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmn";
     let digits = b"12345678901234567890123456789";
     let mut input: std::ArrayList[u8] = .init();
-    defer { _ = input.deinit(allocator); };
+    defer _ = input.deinit(allocator);
     input.appendSlice(allocator, b"[").?;
     for round in 0usize..40 {
         for len in 0usize..40 {
@@ -435,7 +435,7 @@ fun writesPastTheStage() test::Error!() {
     input.appendSlice(allocator, b",\"tail\"]").?;
     let value = parsed(document, allocator, input.asSlice()).?;
     let mut text = allocator.allocSlice[u8](input.len()).?;
-    defer { _ = text.deinit(allocator); };
+    defer _ = text.deinit(allocator);
     let mut output = io::FixedBufferWriter::init(text.asMutSlice());
     value.writeTo(&mut output, json::WriteOptions::compact()).?;
     test::expect(output.written().equals(input.asSlice())).?;
@@ -483,15 +483,15 @@ fun appendEscaped(text: &mut std::ArrayList[u8], allocator: &mut mem::Allocator,
 fun escapesEveryByteAnywhere() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let mut input: std::ArrayList[u8] = .init();
-    defer { _ = input.deinit(allocator); };
+    defer _ = input.deinit(allocator);
     let mut expected: std::ArrayList[u8] = .init();
-    defer { _ = expected.deinit(allocator); };
+    defer _ = expected.deinit(allocator);
     let mut text: std::ArrayList[u8] = .init();
-    defer { _ = text.deinit(allocator); };
+    defer _ = text.deinit(allocator);
     // Bytes 0x00..0x1f, the quote and the backslash, then plain ones.
     let mut specials: [u8; 36] = [0; 36];
     for code in 0usize..32 {
@@ -566,16 +566,16 @@ fun appendRun(text: &mut std::ArrayList[u8], allocator: &mut mem::Allocator, kin
 fun skipsWhitespaceOfAnyLength() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let mut input: std::ArrayList[u8] = .init();
-    defer { _ = input.deinit(allocator); };
+    defer _ = input.deinit(allocator);
     // A longer document that ends in spaces leaves spaces in the reused
     // image past every input below, so a run read beyond the input's end
     // would be taken for indentation.
     let mut spaced: std::ArrayList[u8] = .init();
-    defer { _ = spaced.deinit(allocator); };
+    defer _ = spaced.deinit(allocator);
     spaced.push(allocator, b'0').?;
     appendRun(spaced, allocator, 0, 2000).?;
     // Each piece is followed by a run.
@@ -648,11 +648,11 @@ fun outcome(
 fun readsNumbersAlikeOnEitherPath() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let mut text: std::ArrayList[u8] = .init();
-    defer { _ = text.deinit(allocator); };
+    defer _ = text.deinit(allocator);
     let alphabet = b"-019.eE+";
     let mut long: [u8; 64] = [0; 64];
     let mut short: [u8; 64] = [0; 64];
@@ -694,9 +694,9 @@ fun readsNumbersAlikeOnEitherPath() test::Error!() {
 fun enforcesEveryNodeLimit() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let inputs: [&[u8]; 5] = [
         b"7",
         b"[1,[2,[3,[]]],{}]",
@@ -733,11 +733,11 @@ fun enforcesEveryNodeLimit() test::Error!() {
 fun reusedStorageEndsAtTheInput() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut reused = json::Document::init();
-    defer { _ = reused.deinit(allocator); };
+    defer _ = reused.deinit(allocator);
     let mut fresh = json::Document::init();
-    defer { _ = fresh.deinit(allocator); };
+    defer _ = fresh.deinit(allocator);
     // Quotes and digits everywhere the shorter inputs' windows reach.
     let filler = b"[\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6]";
     let inputs: [&[u8]; 8] = [b"\"", b"\"ab", b"[\"a", b"{\"k", b"1", b"-", b"[12", b"{\"k\":9"];
@@ -764,9 +764,9 @@ fun reusedStorageEndsAtTheInput() test::Error!() {
 fun enforcesEveryTokenLimit() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let letters = b"abcdefghijklmnopqrstuvwxyz";
     let digits = b"12345678901234567890";
     let defaults = json::Options::init();
@@ -778,7 +778,7 @@ fun enforcesEveryTokenLimit() test::Error!() {
                 let string = defaults.withMaxStringBytes(limit).withMaxNumberBytes(other);
                 for shape in 0usize..3 {
                     let mut input: std::ArrayList[u8] = .init();
-                    defer { _ = input.deinit(allocator); };
+                    defer _ = input.deinit(allocator);
                     if shape == 1 { input.appendSlice(allocator, b"{").?; }
                     if shape == 2 { input.appendSlice(allocator, b"{\"\":").?; }
                     input.appendSlice(allocator, b"\"").?;
@@ -800,7 +800,7 @@ fun enforcesEveryTokenLimit() test::Error!() {
                     let number = defaults.withMaxNumberBytes(limit).withMaxStringBytes(other);
                     for shape in 0usize..2 {
                         let mut input: std::ArrayList[u8] = .init();
-                        defer { _ = input.deinit(allocator); };
+                        defer _ = input.deinit(allocator);
                         if shape == 1 { input.appendSlice(allocator, b"[").?; }
                         input.appendSlice(allocator, &digits[0..len]).?;
                         if shape == 1 { input.appendSlice(allocator, b"]").?; }

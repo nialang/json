@@ -11,7 +11,7 @@ using json;
 fun allocationFailuresRetainOwnership() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut backing: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = backing.deinitWithoutLeakCheck(); };
+    defer _ = backing.deinitWithoutLeakCheck();
     let input = b"{\"items\":[[[[[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]]]]],\"text\":\"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\\nb\\uD834\\uDD1E\"}";
     let mut completed = false;
     for failAt in 0usize..32usize {
@@ -34,7 +34,7 @@ fun allocationFailuresRetainOwnership() test::Error!() {
 fun failedCleanupIsRetryable() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut backing: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = backing.deinitWithoutLeakCheck(); };
+    defer _ = backing.deinitWithoutLeakCheck();
     // Nested deeper than the parser keeps in its own frame, so the document
     // owns all three of its storages: image, tape, and frame stack.
     let mut deep: [u8; 101] = [0; 101];
@@ -63,10 +63,10 @@ fun failedCleanupIsRetryable() test::Error!() {
 fun reusesCapacityAndOwnsInput() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut backing: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = backing.deinitWithoutLeakCheck(); };
+    defer _ = backing.deinitWithoutLeakCheck();
     let mut allocator = test::FailingAllocator::init(backing);
     let mut document = json::Document::init();
-    defer { _ = document.deinit(&mut allocator); };
+    defer _ = document.deinit(&mut allocator);
     let mut input: [u8; 9] = b"[\"owned\"]";
     test::expect(document.parse(&mut allocator, input).isSuccess()).?;
     input[2] = b'x';
@@ -90,9 +90,9 @@ fun reusesCapacityAndOwnsInput() test::Error!() {
 fun exactResourceBoundaries() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let defaults = json::Options::init();
     test::expect(document.parseWith(allocator, b"null", defaults.withMaxDepth(0)).isSuccess()).?;
     test::expect(document.parseWith(allocator, b"[]", defaults.withMaxDepth(0)).isError()).?;
@@ -114,9 +114,9 @@ fun exactResourceBoundaries() test::Error!() {
 fun roundsFloatsExplicitly() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let inputs: [&[u8]; 5] = [b"-0", b"0.1", b"9007199254740993", b"5e-324", b"-1e-9999"];
     let bits: [u64; 5] = [0x8000000000000000, 0x3fb999999999999a, 0x4340000000000000, 1, 0x8000000000000000];
     for i in 0..inputs.len() {
@@ -139,9 +139,9 @@ fun roundsFloatsExplicitly() test::Error!() {
 fun writesSubtreesAndPropagatesErrors() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     test::expect(document.parse(allocator, b"{\"x\":[1,{\"a\":true}],\"tail\":2}").isSuccess()).?;
     let top = test::expectSome(document.value()).?;
     let subtree = test::expectSome(test::expectSome(top.asObject()).?.get(b"x")).?;
@@ -162,9 +162,9 @@ fun writesSubtreesAndPropagatesErrors() test::Error!() {
 fun parsesDeepDocumentsIteratively() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(allocator); };
+    defer _ = document.deinit(allocator);
     let mut input: [u8; 65] = [0; 65];
     for i in 0..32 { input[i] = b'['; input[33 + i] = b']'; }
     input[32] = b'0';
@@ -184,9 +184,9 @@ fun parsesDeepDocumentsIteratively() test::Error!() {
 fun spillsFramesAtAnyDepth() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut backing: mem::GeneralPurposeAllocator = .init(page);
-    defer { _ = backing.deinitWithoutLeakCheck(); };
+    defer _ = backing.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
-    defer { _ = document.deinit(backing); };
+    defer _ = document.deinit(backing);
     let mut input: [u8; 161] = [0; 161];
     let mut output: [u8; 161] = [0; 161];
     for depth in 0usize..80 {
