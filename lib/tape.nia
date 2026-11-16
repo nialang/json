@@ -16,6 +16,8 @@ pub enum Kind {
     Object,
 }
 
+// One value on the tape, twelve bytes. What `flags`, `len`, and `data` hold
+// depends on the kind.
 pub(root) struct Node {
     kind: Kind,
     // Boolean: its value. Number: `negativeFlag` and `integerFlag`. String or
@@ -29,7 +31,9 @@ pub(root) struct Node {
     data: u32,
 }
 
+// A number written with a leading minus.
 pub(root) const negativeFlag: u8 = 1;
+// A number written without a fraction or exponent.
 pub(root) const integerFlag: u8 = 2;
 // A string or key whose decoded bytes may need escaping when written. Without
 // it the bytes hold no quote, backslash, or control character and are written

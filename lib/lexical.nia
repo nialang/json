@@ -26,6 +26,7 @@ extend Failure {
     }
 }
 
+// A failure with `code` at `offset`, ready to return as `fail(...)!`.
 fun fail(code: Code, offset: usize) Failure {
     .{ code, offset }
 }
@@ -48,7 +49,9 @@ pub(root) fun skipWhitespace(bytes: &[u8], from: usize) usize {
     let mut index = from;
     while index < bytes.len() and isWhitespace(bytes[index]) {
         index += 1;
-        while bytes.len() - index >= 2 and builtin::loadUnaligned[u16](&bytes[index]) == twoSpaces {
+        while bytes.len() - index >= 2
+            and builtin::loadUnaligned[u16](&bytes[index]) == twoSpaces
+        {
             index += 2;
         }
     }
@@ -175,11 +178,22 @@ pub(root) fun decodeString(image: &mut [u8], quote: usize, limit: usize) Failure
                 write += 16;
                 continue;
             }
+
+            // The bytes before the first special one move; `count` of them.
             let special = builtin::bitmask(specialLanes);
-            let mut count = if special == 0 { 16usize } else { builtin::ctz[u16](special) as usize };
+            let mut count = if special == 0 {
+                16usize
+            } else {
+                builtin::ctz[u16](special) as usize
+            };
             if builtin::bitmask(highLanes) != 0 {
-                // The check reads the three bytes before the chunk.
-                if read < 3 or (utf8ChunkErrors(image, read, chunk) as usize & ((2usize << count) - 1)) != 0 {
+                // The check reads the three bytes before the chunk, and only
+                // the errors in the lanes that move matter.
+                if read < 3 {
+                    break;
+                }
+                let moving = (2usize << count) - 1;
+                if (utf8ChunkErrors(image, read, chunk) as usize & moving) != 0 {
                     break;
                 }
                 if special == 0 {
@@ -205,6 +219,8 @@ pub(root) fun decodeString(image: &mut [u8], quote: usize, limit: usize) Failure
                 break;
             }
         }
+
+        // One byte that the vector loop stopped at.
         if read == image.len() {
             return fail(.UnexpectedEnd, read)!;
         }
@@ -220,7 +236,11 @@ pub(root) fun decodeString(image: &mut [u8], quote: usize, limit: usize) Failure
             // Escapes tend to come in runs; a run is decoded here, without a
             // pass through the vector loop between its escapes.
             loop {
-                let simple = if read + 1 < image.len() { simpleEscape(image[read + 1]) } else { 0 };
+                let simple = if read + 1 < image.len() {
+                    simpleEscape(image[read + 1])
+                } else {
+                    0
+                };
                 if simple != 0 {
                     image[write] = simple;
                     read += 2;
@@ -249,7 +269,8 @@ pub(root) fun decodeString(image: &mut [u8], quote: usize, limit: usize) Failure
                     while read < image.len() and image[read] >= 0x80 {
                         let width = utf8SequenceWidth(image, read).?;
                         if write != read {
-                            _ = (&mut image[write..(write + width)]).copyFrom(&image[read..(read + width)]);
+                            let source = &image[read..(read + width)];
+                            _ = (&mut image[write..(write + width)]).copyFrom(source);
                         }
                         read += width;
                         write += width;
@@ -322,7 +343,8 @@ fun utf8ChunkErrors(image: &[u8], at: usize, chunk: u8x16) u16 {
     let required = ((prev1 >= builtin::splat[u8x16](0xc0)) & fromLane1)
         | ((prev2 >= builtin::splat[u8x16](0xe0)) & fromLane2)
         | ((prev3 >= builtin::splat[u8x16](0xf0)) & fromLane3);
-    let continuation = (chunk >= builtin::splat[u8x16](0x80)) & (chunk < builtin::splat[u8x16](0xc0));
+    let continuation = (chunk >= builtin::splat[u8x16](0x80))
+        & (chunk < builtin::splat[u8x16](0xc0));
     let invalid = (chunk == builtin::splat[u8x16](0xc0))
         | (chunk == builtin::splat[u8x16](0xc1))
         | (chunk >= builtin::splat[u8x16](0xf5));
@@ -391,6 +413,8 @@ fun utf8WordWidth(word: u32) usize {
     }
 }
 
+// Where decoding continues after an escape: the next byte to read and the
+// next to write.
 struct Cursor {
     read: usize,
     write: usize,
@@ -430,6 +454,7 @@ fun decodeEscape(image: &mut [u8], read: usize, write: usize) Failure!Cursor {
     !.{ read: next, write: write + encodeUtf8(image, write, scalar) }
 }
 
+// The value of the four hexadecimal digits at `start`, of either case.
 fun hex4(image: &[u8], start: usize) Failure!u32 {
     if image.len() - start < 4 {
         return fail(.InvalidUnicodeEscape, start)!;
@@ -574,6 +599,7 @@ fun isDigit(byte: u8) bool {
     byte >= b'0' and byte <= b'9'
 }
 
+// The first byte at or after `from` that is not a decimal digit.
 fun skipDigits(bytes: &[u8], from: usize) usize {
     let mut index = from;
     // Sixteen bytes at a time; a byte that is not a digit lies below `'0'` or

@@ -29,7 +29,11 @@ extend WriteOptions {
 const inlineDepth: usize = 64;
 
 // Writes `value` to `output`; see `Value::writeTo`.
-pub(root) fun writeValue[W](value: Value, output: &mut W, options: WriteOptions) [W as io::Writer]::Error!()
+pub(root) fun writeValue[W](
+    value: Value,
+    output: &mut W,
+    options: WriteOptions,
+) [W as io::Writer]::Error!()
 where W: io::Writer
 {
     let mut staged = Staged[W]::init(output);
@@ -37,7 +41,17 @@ where W: io::Writer
     staged.flush()
 }
 
-fun writeTokens[W](value: Value, out: &mut Staged[W], options: WriteOptions) [W as io::Writer]::Error!()
+// Stages the tokens of `value` and its subtree in document order.
+//
+// The tape lists nodes in that order already, so the writer walks it forward
+// and needs to know only which containers are open: a member's key comes
+// first when the innermost one is an object, and after each value every
+// container whose subtree ends there closes.
+fun writeTokens[W](
+    value: Value,
+    out: &mut Staged[W],
+    options: WriteOptions,
+) [W as io::Writer]::Error!()
 where W: io::Writer
 {
     let document = value.document();
@@ -48,6 +62,7 @@ where W: io::Writer
     let mut depth: usize = 0;
     let mut index = value.index();
     loop {
+        // A member's key.
         if depth != 0 and nodes[enclosing(nodes, open, depth, index)].kind == Kind::Object {
             writeString(out, nodes[index], image).?;
             out.byte(b':').?;
@@ -56,6 +71,9 @@ where W: io::Writer
             }
             index += 1;
         }
+
+        // The value. Opening a non-empty container continues with its first
+        // child.
         let node = nodes[index];
         match node.kind {
             .Null => out.bytes(b"null").?,
@@ -76,8 +94,9 @@ where W: io::Writer
                 out.byte(if node.kind == Kind::Array { b']' } else { b'}' }).?;
             },
         }
-        index = node.subtreeEnd(index);
+
         // Close every container that ends here.
+        index = node.subtreeEnd(index);
         loop {
             if depth == 0 {
                 return !();
@@ -108,6 +127,8 @@ fun enclosing(nodes: &[Node], open: &[usize], depth: usize, index: usize) usize 
     }
 }
 
+// The innermost open container beyond the `inlineDepth` held ones; see
+// `enclosing`. Rare, so kept out of the writer's loop.
 fun enclosingDeep(nodes: &[Node], open: &[usize], depth: usize, index: usize) usize {
     let mut container = open[inlineDepth - 1];
     for _ in inlineDepth..depth {
@@ -125,7 +146,13 @@ fun enclosingDeep(nodes: &[Node], open: &[usize], depth: usize, index: usize) us
     container
 }
 
-fun newline[W](out: &mut Staged[W], options: WriteOptions, depth: usize) [W as io::Writer]::Error!()
+// The line break and indentation before a token at `depth`, when writing
+// pretty text.
+fun newline[W](
+    out: &mut Staged[W],
+    options: WriteOptions,
+    depth: usize,
+) [W as io::Writer]::Error!()
 where W: io::Writer
 {
     if options.pretty {
@@ -150,6 +177,7 @@ where W: io::Writer
     writeEscaped(out, node.bytes(image))
 }
 
+// Writes `bytes` as a quoted JSON string, escaping what must be.
 fun writeEscaped[W](out: &mut Staged[W], bytes: &[u8]) [W as io::Writer]::Error!()
 where W: io::Writer
 {
@@ -215,6 +243,7 @@ const escapeStep: usize = 15 * 6 + 8;
 static spellings: [[u8; 8]; 256] = spellingTable;
 const spellingTable: [[u8; 8]; 256] = spellAll();
 
+// Builds `spellings` at compile time.
 const fun spellAll() [[u8; 8]; 256] {
     let hex = b"0123456789abcdef";
     let mut table: [[u8; 8]; 256] = [[0; 8]; 256];
@@ -268,6 +297,7 @@ where W: io::Writer
 
     @[inlineAlways]
     fun bytes(&mut self, bytes: &[u8]) [W as io::Writer]::Error!() {
+        // Too little room left: make room, or bypass the stage.
         if bytes.len() > stageBytes - self.len {
             self.flush().?;
             // A run longer than the stage goes to the writer whole.
@@ -295,6 +325,7 @@ where W: io::Writer
         self.bytes(&image[start..(start + len)])
     }
 
+    // Hands the staged bytes to the writer.
     fun flush(&mut self) [W as io::Writer]::Error!() {
         if self.len != 0 {
             self.output.writeAll(&self.buffer[0..self.len]).?;

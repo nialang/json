@@ -4,30 +4,64 @@
 // in `bench/` print the same report.
 //
 //     bench <parse|reuse|write|roundtrip> <iterations> < input.json
+//
+// Exit status 2 means bad arguments or input, 3 a failed parse, 4 a failed
+// write, and 5 a failed release.
+
 using std::io;
 using std::mem;
+using std::option;
 using std::process;
-using std::parse;
 using std::slice;
 using std::time;
 using json;
 
-enum Mode { Parse, Reuse, Write, Roundtrip }
+// What each iteration of the measured loop does.
+enum Mode {
+    // Parses into a fresh document and releases it.
+    Parse,
+    // Parses into one document whose storage is reused.
+    Reuse,
+    // Writes the document parsed before the loop.
+    Write,
+    // Parses into a fresh document, writes it, and releases it.
+    Roundtrip,
+}
+
+fun parseMode(name: &[u8]) ?Mode {
+    if name.equals(b"parse") {
+        return ?.Parse;
+    }
+    if name.equals(b"reuse") {
+        return ?.Reuse;
+    }
+    if name.equals(b"write") {
+        return ?.Write;
+    }
+    if name.equals(b"roundtrip") {
+        return ?.Roundtrip;
+    }
+    null
+}
 
 pub fun main(init: process::Init) process::ExitCode!() {
     let args = init.args();
-    if args.len() != 3 { return process::ExitCode(2)!; }
-    let modeBytes = match args.get(1) { ?arg => arg.bytes(), null => return process::ExitCode(2)! };
-    let mode = if modeBytes.equals(b"parse") { Mode::Parse }
-        else if modeBytes.equals(b"reuse") { Mode::Reuse }
-        else if modeBytes.equals(b"write") { Mode::Write }
-        else if modeBytes.equals(b"roundtrip") { Mode::Roundtrip }
-        else { return process::ExitCode(2)!; };
+    if args.len() != 3 {
+        return process::ExitCode(2)!;
+    }
+    let modeName = args.get(1).okOr(process::ExitCode(2)).?.bytes();
+    let mode = parseMode(modeName).okOr(process::ExitCode(2)).?;
     let iterations = match args.get(2) {
-        ?arg => match arg.parse[usize]() { !value => value, _! => return process::ExitCode(2)! },
+        ?arg => match arg.parse[usize]() {
+            !value => value,
+            _! => return process::ExitCode(2)!,
+        },
         null => return process::ExitCode(2)!,
     };
-    if iterations == 0 { return process::ExitCode(2)!; }
+    if iterations == 0 {
+        return process::ExitCode(2)!;
+    }
+
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
     defer allocator.deinit().?;
@@ -36,9 +70,11 @@ pub fun main(init: process::Init) process::ExitCode!() {
     let mut readBuffer: [u8; 4096] = [0; 4096];
     let mut reader = io::FileReader::stdin(readBuffer);
     // As much input as a document accepts by default.
-    if io::readToEnd(&mut reader, allocator, json::Options::init().maxInputBytes(), &mut input) is error! {
+    let maxInput = json::Options::init().maxInputBytes();
+    if io::readToEnd(&mut reader, allocator, maxInput, &mut input) is error! {
         return process::ExitCode(2)!;
     }
+
     let mut document = json::Document::init();
     defer document.deinit(allocator).?;
     let mut totalNodes: usize = 0;
@@ -46,39 +82,52 @@ pub fun main(init: process::Init) process::ExitCode!() {
     // Text is written into memory, as the comparators write it: a buffer
     // sized once from a first, untimed write and reused by every iteration.
     let mut sizing = io::DiscardingWriter::init();
-    if document.parse(allocator, input.asSlice()) is error! { return process::ExitCode(3)!; }
-    let first = match document.value() { ?value => value, null => return process::ExitCode(3)! };
-    if first.writeTo(&mut sizing, json::WriteOptions::compact()) is error! { return process::ExitCode(4)!; }
+    if document.parse(allocator, input.asSlice()) is error! {
+        return process::ExitCode(3)!;
+    }
+    let first = document.value().okOr(process::ExitCode(3)).?;
+    if first.writeTo(&mut sizing, json::WriteOptions::compact()) is error! {
+        return process::ExitCode(4)!;
+    }
     let mut text = allocator.allocSlice[u8](sizing.len()).?;
     defer text.deinit(allocator).?;
-    if mode is (.Write) {} else {
-        if document.deinit(allocator) is error! { return process::ExitCode(5)!; }
+    if mode != .Write {
+        if document.deinit(allocator) is error! {
+            return process::ExitCode(5)!;
+        }
         document = json::Document::init();
     }
+
     // Only the measured loop is timed: reading stdin, the warm document for
     // writing and process startup are not part of a sample.
     let start = time::Instant::now();
     for _ in 0..iterations {
-        if mode is (.Write) {} else {
-            if document.parse(allocator, input.asSlice()) is error! { return process::ExitCode(3)!; }
+        if mode != .Write {
+            if document.parse(allocator, input.asSlice()) is error! {
+                return process::ExitCode(3)!;
+            }
         }
         totalNodes += document.nodeCount();
-        if match mode { .Write => true, .Roundtrip => true, _ => false } {
-            let value = match document.value() { ?value => value, null => return process::ExitCode(3)! };
+        if mode == .Write or mode == .Roundtrip {
+            let value = document.value().okOr(process::ExitCode(3)).?;
             let mut output = io::FixedBufferWriter::init(text.asMutSlice());
             if value.writeTo(&mut output, json::WriteOptions::compact()) is error! {
                 return process::ExitCode(4)!;
             }
             outputBytes += output.len();
         }
-        if match mode { .Parse => true, .Roundtrip => true, _ => false } {
-            if document.deinit(allocator) is error! { return process::ExitCode(5)!; }
+        if mode == .Parse or mode == .Roundtrip {
+            if document.deinit(allocator) is error! {
+                return process::ExitCode(5)!;
+            }
             document = json::Document::init();
         }
     }
     let elapsed = start.elapsed();
-    io::debugPrint("iterations={} nodes={} input_bytes={} output_bytes={} elapsed_ns={}\n", [
-        iterations, totalNodes, input.len(), outputBytes, elapsed.nanos(),
-    ]).?;
+
+    io::debugPrint(
+        "iterations={} nodes={} input_bytes={} output_bytes={} elapsed_ns={}\n",
+        [iterations, totalNodes, input.len(), outputBytes, elapsed.nanos()],
+    ).?;
     !()
 }

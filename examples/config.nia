@@ -3,6 +3,7 @@
 // the document written back indented.
 //
 // Run it with `nia build run-config`.
+
 using std::builtin;
 using std::io;
 using std::mem;
@@ -11,7 +12,14 @@ using std::process;
 using std::result;
 using json;
 
-static text = b"{\"name\":\"api\",\"port\":8080,\"hosts\":[\"a.example\",\"b.example\"],\"limits\":{\"memory\":536870912,\"cpu\":1.5}}";
+// The configuration this example reads, one member per line. Adjacent
+// literals are one literal, so the text has no line breaks.
+static text = b"{"
+    b"\"name\":\"api\","
+    b"\"port\":8080,"
+    b"\"hosts\":[\"a.example\",\"b.example\"],"
+    b"\"limits\":{\"memory\":536870912,\"cpu\":1.5}"
+    b"}";
 
 // The fields the configuration needs. They are statics because an error that
 // names one outlives `read`, and a literal written inside a function lives
@@ -64,16 +72,27 @@ fun integer(value: json::Value, name: &[u8], max: u64) ConfigError!u64 {
 }
 
 // Parses `input` into `document` and reads the configuration from it.
-fun read(document: &mut json::Document, allocator: &mut mem::Allocator, input: &[u8]) ConfigError!Config {
+fun read(
+    document: &mut json::Document,
+    allocator: &mut mem::Allocator,
+    input: &[u8],
+) ConfigError!Config {
     document.parse(allocator, input).?;
     let top = document.value().okOr(ConfigError::NotObject).?;
     let fields = top.asObject().okOr(ConfigError::NotObject).?;
-    let name = field(fields, nameField).?.asString().okOr(ConfigError::Field(nameField)).?;
+
+    let name = field(fields, nameField).?
+        .asString()
+        .okOr(ConfigError::Field(nameField)).?;
     let port = integer(field(fields, portField).?, portField, 65535).?;
-    let hosts = field(fields, hostsField).?.asArray().okOr(ConfigError::Field(hostsField)).?;
+    let hosts = field(fields, hostsField).?
+        .asArray()
+        .okOr(ConfigError::Field(hostsField)).?;
+
     // A pointer reaches into nested objects in one step. Its error does not
     // name the field, so the field is supplied here.
-    let limit = top.pointer(memoryPointer).mapError(\_ -> ConfigError::Field(memoryPointer)).?;
+    let limit = top.pointer(memoryPointer)
+        .mapError(\_ -> ConfigError::Field(memoryPointer)).?;
     let memory = integer(limit, memoryPointer, u64::MAX).?;
     !.{ name, port: port as u16, hosts, memory }
 }
@@ -90,7 +109,10 @@ pub fun main(init: process::Init) process::ExitCode!() {
     let config = match read(&mut document, allocator, text) {
         !config => config,
         .Json(json::Error::Syntax(diagnostic))! => {
-            io::debugPrint("not JSON: line {} column {}\n", [diagnostic.line(), diagnostic.column()]).?;
+            io::debugPrint(
+                "not JSON: line {} column {}\n",
+                [diagnostic.line(), diagnostic.column()],
+            ).?;
             return process::ExitCode(1)!;
         },
         .Field(name)! => {
@@ -99,7 +121,10 @@ pub fun main(init: process::Init) process::ExitCode!() {
         },
         _! => return process::ExitCode(1)!,
     };
-    io::debugPrint("{} listens on port {} with {} bytes\n", [config.name, config.port, config.memory]).?;
+    io::debugPrint(
+        "{} listens on port {} with {} bytes\n",
+        [config.name, config.port, config.memory],
+    ).?;
     for host in config.hosts {
         if host.asString() is ?name {
             io::debugPrint("host {}\n", [name]).?;

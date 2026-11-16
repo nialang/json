@@ -177,12 +177,7 @@ extend Object {
     // duplicate keys. Members are found by walking the object.
     pub fun get(self, key: &[u8]) ?Value {
         let mut found: ?Value = null;
-        let mut members = self.iter();
-        loop {
-            let member = match members.next() {
-                ?member => member,
-                null => break,
-            };
+        for member in self {
             if member.key.equals(key) {
                 found = ?member.value;
             }

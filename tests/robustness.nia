@@ -1,3 +1,6 @@
+// Ownership, limits, and failure behavior: what holds when allocation,
+// release, or writing fails, and where each limit in `Options` draws its line.
+
 using std::io;
 using std::math;
 using std::mem;
@@ -8,11 +11,20 @@ using std::slice;
 using std::test;
 using json;
 
+// Whichever allocation fails, the parse reports it, the document holds no
+// value, and `deinit` releases everything allocated so far.
 fun allocationFailuresRetainOwnership() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut backing: mem::GeneralPurposeAllocator = .init(page);
     defer _ = backing.deinitWithoutLeakCheck();
-    let input = b"{\"items\":[[[[[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]]]]],\"text\":\"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\\nb\\uD834\\uDD1E\"}";
+    // Nested containers, numbers, and a string past the fast path with escapes
+    // and a surrogate pair, so every kind of storage grows during the parse.
+    let input = b"{\"items\":[[[[[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]]]]],"
+        b"\"text\":\""
+        b"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
+        b"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
+        b"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
+        b"\\nb\\uD834\\uDD1E\"}";
     let mut completed = false;
     for failAt in 0usize..32usize {
         let mut allocator = test::FailingAllocator::init(backing);
@@ -22,15 +34,21 @@ fun allocationFailuresRetainOwnership() test::Error!() {
         if parsed is error! {
             test::expect(match parsed { json::Error::Allocation(_)! => true, _ => false }).?;
             test::expect(document.value().isNull()).?;
-        } else { completed = true; }
+        } else {
+            completed = true;
+        }
         allocator.clearFailures();
         test::expect(document.deinit(&mut allocator).isSuccess()).?;
         test::expectEqual(allocator.activeBlocks(), 0).?;
-        if completed { break; }
+        if completed {
+            break;
+        }
     }
     test::expect(completed)
 }
 
+// A `deinit` that fails to release some storage keeps it, refuses to parse
+// again, and releases it on a later `deinit`, once.
 fun failedCleanupIsRetryable() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut backing: mem::GeneralPurposeAllocator = .init(page);
@@ -38,20 +56,26 @@ fun failedCleanupIsRetryable() test::Error!() {
     // Nested deeper than the parser keeps in its own frame, so the document
     // owns all three of its storages: image, tape, and frame stack.
     let mut deep: [u8; 101] = [0; 101];
-    for i in 0..50 { deep[i] = b'['; deep[51 + i] = b']'; }
+    for i in 0..50 {
+        deep[i] = b'[';
+        deep[51 + i] = b']';
+    }
     deep[50] = b'0';
     for failAt in 0usize..3usize {
         let mut allocator = test::FailingAllocator::init(backing);
         let mut document = json::Document::init();
         test::expect(document.parse(&mut allocator, deep).isSuccess()).?;
         test::expectEqual(allocator.activeBlocks(), 3).?;
+
         allocator.failFreeAfter(failAt);
         test::expect(document.deinit(&mut allocator).isError()).?;
         test::expect(document.value().isNull()).?;
         document.clear();
         test::expect(match document.parse(&mut allocator, b"null") {
-            json::Error::InvalidState! => true, _ => false,
+            json::Error::InvalidState! => true,
+            _ => false,
         }).?;
+
         allocator.clearFailures();
         test::expect(document.deinit(&mut allocator).isSuccess()).?;
         test::expect(document.deinit(&mut allocator).isSuccess()).?;
@@ -60,6 +84,8 @@ fun failedCleanupIsRetryable() test::Error!() {
     !()
 }
 
+// A document copies its input, reuses its storage across parses, and holds
+// no value after a failed parse or `clear`.
 fun reusesCapacityAndOwnsInput() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut backing: mem::GeneralPurposeAllocator = .init(page);
@@ -67,17 +93,22 @@ fun reusesCapacityAndOwnsInput() test::Error!() {
     let mut allocator = test::FailingAllocator::init(backing);
     let mut document = json::Document::init();
     defer _ = document.deinit(&mut allocator);
+
+    // Changing the input after the parse does not change the document.
     let mut input: [u8; 9] = b"[\"owned\"]";
     test::expect(document.parse(&mut allocator, input).isSuccess()).?;
     input[2] = b'x';
     let top = test::expectSome(document.value()).?;
     let value = test::expectSome(test::expectSome(top.asArray()).?.get(0)).?;
     test::expect(test::expectSome(value.asString()).?.equals(b"owned")).?;
+
+    // Parses that fit the storage already held allocate nothing.
     let attempts = allocator.allocationAttempts();
     for _ in 0..100 {
         test::expect(document.parse(&mut allocator, b"[\"other\"]").isSuccess()).?;
     }
     test::expectEqual(allocator.allocationAttempts(), attempts).?;
+
     test::expect(document.parse(&mut allocator, b"[").isError()).?;
     test::expect(document.value().isNull()).?;
     test::expectEqual(document.nodeCount(), 0).?;
@@ -87,6 +118,7 @@ fun reusesCapacityAndOwnsInput() test::Error!() {
     !()
 }
 
+// Each limit accepts a document exactly at it and rejects one just past it.
 fun exactResourceBoundaries() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
@@ -94,48 +126,69 @@ fun exactResourceBoundaries() test::Error!() {
     let mut document = json::Document::init();
     defer _ = document.deinit(allocator);
     let defaults = json::Options::init();
-    test::expect(document.parseWith(allocator, b"null", defaults.withMaxDepth(0)).isSuccess()).?;
-    test::expect(document.parseWith(allocator, b"[]", defaults.withMaxDepth(0)).isError()).?;
-    test::expect(document.parseWith(allocator, b"[[]]", defaults.withMaxDepth(2)).isSuccess()).?;
-    test::expect(document.parseWith(allocator, b"[[]]", defaults.withMaxDepth(1)).isError()).?;
-    test::expect(document.parseWith(allocator, b"[0]", defaults.withMaxNodes(2)).isSuccess()).?;
-    test::expect(document.parseWith(allocator, b"0", defaults.withMaxNodes(0)).isError()).?;
-    test::expect(document.parseWith(allocator, b"null", defaults.withMaxInputBytes(4)).isSuccess()).?;
-    test::expect(document.parseWith(allocator, b"123", defaults.withMaxNumberBytes(3)).isSuccess()).?;
-    test::expect(document.parseWith(allocator, b"0", defaults.withMaxNumberBytes(0)).isError()).?;
-    test::expect(document.parseWith(allocator, b"\"\"", defaults.withMaxStringBytes(0)).isSuccess()).?;
-    test::expect(document.parseWith(allocator, b"\"\\u0061\"", defaults.withMaxStringBytes(1)).isSuccess()).?;
-    test::expect(document.parseWith(allocator, b"\"\\uD834\\uDD1E\"", defaults.withMaxStringBytes(4)).isSuccess()).?;
-    test::expect(document.parseWith(allocator, b"\"\\uD834\\uDD1E\"", defaults.withMaxStringBytes(3)).isError()).?;
-    test::expect(document.parseWith(allocator, b"{\"ab\":0}", defaults.withMaxStringBytes(1)).isError()).?;
+    // (input, options, whether it parses)
+    let cases: [(&[u8], json::Options, bool); 14] = [
+        // Depth counts containers; scalars alone have depth zero.
+        (b"null", defaults.withMaxDepth(0), true),
+        (b"[]", defaults.withMaxDepth(0), false),
+        (b"[[]]", defaults.withMaxDepth(2), true),
+        (b"[[]]", defaults.withMaxDepth(1), false),
+        (b"[0]", defaults.withMaxNodes(2), true),
+        (b"0", defaults.withMaxNodes(0), false),
+        (b"null", defaults.withMaxInputBytes(4), true),
+        (b"123", defaults.withMaxNumberBytes(3), true),
+        (b"0", defaults.withMaxNumberBytes(0), false),
+        // Strings are limited by their decoded length, keys included.
+        (b"\"\"", defaults.withMaxStringBytes(0), true),
+        (b"\"\\u0061\"", defaults.withMaxStringBytes(1), true),
+        (b"\"\\uD834\\uDD1E\"", defaults.withMaxStringBytes(4), true),
+        (b"\"\\uD834\\uDD1E\"", defaults.withMaxStringBytes(3), false),
+        (b"{\"ab\":0}", defaults.withMaxStringBytes(1), false),
+    ];
+    for &(input, options, accepted) in &cases[..] {
+        test::expectEqual(document.parseWith(allocator, input, options).isSuccess(), accepted).?;
+    }
     !()
 }
 
+// Conversions to floating point round correctly, keep the sign of zero, and
+// report a magnitude too large; the number's text stays as written.
 fun roundsFloatsExplicitly() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
     defer _ = allocator.deinitWithoutLeakCheck();
     let mut document = json::Document::init();
     defer _ = document.deinit(allocator);
-    let inputs: [&[u8]; 5] = [b"-0", b"0.1", b"9007199254740993", b"5e-324", b"-1e-9999"];
-    let bits: [u64; 5] = [0x8000000000000000, 0x3fb999999999999a, 0x4340000000000000, 1, 0x8000000000000000];
-    for i in 0..inputs.len() {
-        test::expect(document.parse(allocator, inputs[i]).isSuccess()).?;
+    // (input, bits of the nearest f64)
+    let cases: [(&[u8], u64); 5] = [
+        (b"-0", 0x8000000000000000),
+        (b"0.1", 0x3fb999999999999a),
+        // 2^53 + 1 lies halfway between two doubles and rounds to even.
+        (b"9007199254740993", 0x4340000000000000),
+        // The smallest subnormal.
+        (b"5e-324", 1),
+        // Too small to represent: a zero of the same sign.
+        (b"-1e-9999", 0x8000000000000000),
+    ];
+    for &(input, bits) in &cases[..] {
+        test::expect(document.parse(allocator, input).isSuccess()).?;
         let number = test::expectSome(test::expectSome(document.value()).?.asNumber()).?;
-        let value = number.toF64().?;
-        test::expectEqual(value.toBits(), bits[i]).?;
-        test::expect(number.raw().equals(inputs[i])).?;
+        test::expectEqual(number.toF64().?.toBits(), bits).?;
+        test::expect(number.raw().equals(input)).?;
     }
+
     test::expect(document.parse(allocator, b"1e9999").isSuccess()).?;
     let number = test::expectSome(test::expectSome(document.value()).?.asNumber()).?;
     test::expect(number.toF64().isError()).?;
+
+    // 2^24 + 1 rounds to even as an f32.
     test::expect(document.parse(allocator, b"16777217").isSuccess()).?;
     let number = test::expectSome(test::expectSome(document.value()).?.asNumber()).?;
-    let value = number.toF32().?;
-    test::expectEqual(value.toBits(), 0x4b800000u32).?;
+    test::expectEqual(number.toF32().?.toBits(), 0x4b800000u32).?;
     !()
 }
 
+// A subtree writes on its own, and a writer's failure reaches the caller.
 fun writesSubtreesAndPropagatesErrors() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
@@ -145,20 +198,26 @@ fun writesSubtreesAndPropagatesErrors() test::Error!() {
     test::expect(document.parse(allocator, b"{\"x\":[1,{\"a\":true}],\"tail\":2}").isSuccess()).?;
     let top = test::expectSome(document.value()).?;
     let subtree = test::expectSome(test::expectSome(top.asObject()).?.get(b"x")).?;
+
     let mut bytes: [u8; 64] = [0; 64];
     let mut output = io::FixedBufferWriter::init(bytes);
     test::expect(subtree.writeTo(&mut output, json::WriteOptions::compact()).isSuccess()).?;
     test::expect(output.written().equals(b"[1,{\"a\":true}]")).?;
+
     let mut shortBytes: [u8; 3] = [0; 3];
     let mut shortOutput = io::FixedBufferWriter::init(shortBytes);
     test::expect(match subtree.writeTo(&mut shortOutput, json::WriteOptions::compact()) {
-        io::BufferError::NoSpace! => true, _ => false,
+        io::BufferError::NoSpace! => true,
+        _ => false,
     }).?;
+
     // Keys count as values: the object, three keys, the array, and four more.
     test::expectEqual(document.nodeCount(), 9).?;
     !()
 }
 
+// Nesting uses an explicit frame stack, so a deep document parses and writes
+// back unchanged.
 fun parsesDeepDocumentsIteratively() test::Error!() {
     let mut page: mem::PageAllocator = .init();
     let mut allocator: mem::GeneralPurposeAllocator = .init(page);
@@ -166,10 +225,14 @@ fun parsesDeepDocumentsIteratively() test::Error!() {
     let mut document = json::Document::init();
     defer _ = document.deinit(allocator);
     let mut input: [u8; 65] = [0; 65];
-    for i in 0..32 { input[i] = b'['; input[33 + i] = b']'; }
+    for i in 0..32 {
+        input[i] = b'[';
+        input[33 + i] = b']';
+    }
     input[32] = b'0';
     test::expect(document.parse(allocator, input).isSuccess()).?;
     test::expectEqual(document.nodeCount(), 33).?;
+
     let mut outputBytes: [u8; 65] = [0; 65];
     let mut output = io::FixedBufferWriter::init(outputBytes);
     let top = test::expectSome(document.value()).?;
@@ -190,8 +253,11 @@ fun spillsFramesAtAnyDepth() test::Error!() {
     let mut input: [u8; 161] = [0; 161];
     let mut output: [u8; 161] = [0; 161];
     for depth in 0usize..80 {
-        // `depth` arrays around a member of a `depth`-deep object chain.
-        for i in 0..depth { input[i] = b'['; input[depth + 1 + i] = b']'; }
+        // `depth` arrays around a number.
+        for i in 0..depth {
+            input[i] = b'[';
+            input[depth + 1 + i] = b']';
+        }
         input[depth] = b'7';
         let text = &input[0..(2 * depth + 1)];
         test::expect(document.parse(backing, text).isSuccess()).?;
@@ -201,6 +267,7 @@ fun spillsFramesAtAnyDepth() test::Error!() {
         test::expect(top.writeTo(&mut writer, json::WriteOptions::compact()).isSuccess()).?;
         test::expect(writer.written().equals(text)).?;
     }
+
     let deep = &input[0..(2 * 79 + 1)];
     let mut completed = false;
     for failAt in 0usize..16usize {
@@ -215,7 +282,9 @@ fun spillsFramesAtAnyDepth() test::Error!() {
         allocator.clearFailures();
         test::expect(fresh.deinit(&mut allocator).isSuccess()).?;
         test::expectEqual(allocator.activeBlocks(), 0).?;
-        if completed { break; }
+        if completed {
+            break;
+        }
     }
     test::expect(completed)
 }
@@ -233,8 +302,12 @@ pub fun main(init: process::Init) process::ExitCode!() {
         .init("frames spilled at any depth", spillsFramesAtAnyDepth),
     ];
     let summary = test::Runner::init(cases).runWith(&mut \result -> {
-        if result.error() is ?cause { _ = io::debugPrint("{}: {}\n", [result.name(), cause]); }
+        if result.error() is ?cause {
+            _ = io::debugPrint("{}: {}\n", [result.name(), cause]);
+        }
     });
-    if not summary.isSuccessful() { return process::ExitCode(1)!; }
+    if not summary.isSuccessful() {
+        return process::ExitCode(1)!;
+    }
     !()
 }

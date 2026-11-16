@@ -67,6 +67,7 @@ extend mem::Error : builtin::IntoError[Failure] {
     }
 }
 
+// A syntax failure with `code` at `offset`.
 fun syntax(code: Code, offset: usize) Failure {
     .Syntax(.{ code, offset })
 }
@@ -126,7 +127,8 @@ fun parseTape[ShortLimits: bool](
     let mut container: usize = 0;
     let mut children: usize = 0;
     let mut inArray = false;
-    // The top-level value.
+
+    // The top-level value. A scalar is the whole document.
     let mut position = skipWhitespace(image, 0);
     if position >= len {
         return syntax(.UnexpectedEnd, position)!;
@@ -135,7 +137,14 @@ fun parseTape[ShortLimits: bool](
     children += 1;
     let top = image[position];
     if top != b'[' and top != b'{' {
-        position = scalar[ShortLimits](image, nodes, count, position, maxString, maxNumber).?;
+        position = scalar[ShortLimits](
+            image,
+            nodes,
+            count,
+            position,
+            maxString,
+            maxNumber,
+        ).?;
         count += 1;
         position = skipWhitespace(image, position);
         if position != len {
@@ -143,6 +152,7 @@ fun parseTape[ShortLimits: bool](
         }
         return !count;
     }
+
     // Opening a container: the byte at `position` is its bracket.
     let mut opening = true;
     loop {
@@ -165,6 +175,7 @@ fun parseTape[ShortLimits: bool](
             count += 1;
             position += 1;
         }
+
         // Whether the loop below stopped at a child's opening bracket rather
         // than its own container's close.
         opening = false;
@@ -173,6 +184,7 @@ fun parseTape[ShortLimits: bool](
         // common case, never asks whether a byte is whitespace.
         if inArray {
             loop {
+                // The separator before this element, or the close.
                 let mut byte = peek(image, position);
                 if first {
                     if lexical::isWhitespace(byte) {
@@ -203,6 +215,9 @@ fun parseTape[ShortLimits: bool](
                         byte = peek(image, position);
                     }
                 }
+
+                // The element: a scalar here, or a container the outer loop
+                // opens.
                 if position >= len {
                     return syntax(.UnexpectedEnd, position)!;
                 }
@@ -212,11 +227,19 @@ fun parseTape[ShortLimits: bool](
                     opening = true;
                     break;
                 }
-                position = scalar[ShortLimits](image, nodes, count, position, maxString, maxNumber).?;
+                position = scalar[ShortLimits](
+                    image,
+                    nodes,
+                    count,
+                    position,
+                    maxString,
+                    maxNumber,
+                ).?;
                 count += 1;
             }
         } else {
             loop {
+                // The separator before this member, or the close.
                 let mut byte = peek(image, position);
                 if first {
                     if lexical::isWhitespace(byte) {
@@ -243,6 +266,8 @@ fun parseTape[ShortLimits: bool](
                     position += 1;
                     byte = peek(image, position);
                 }
+
+                // The key and its colon.
                 if byte != b'"' {
                     position = lexical::skipWhitespace(image, position);
                     if peek(image, position) != b'"' {
@@ -259,6 +284,8 @@ fun parseTape[ShortLimits: bool](
                     }
                 }
                 position += 1;
+
+                // The value, as an array element is read.
                 byte = peek(image, position);
                 if lexical::isWhitespace(byte) {
                     position = lexical::skipWhitespace(image, position);
@@ -273,10 +300,18 @@ fun parseTape[ShortLimits: bool](
                     opening = true;
                     break;
                 }
-                position = scalar[ShortLimits](image, nodes, count, position, maxString, maxNumber).?;
+                position = scalar[ShortLimits](
+                    image,
+                    nodes,
+                    count,
+                    position,
+                    maxString,
+                    maxNumber,
+                ).?;
                 count += 1;
             }
         }
+
         if not opening {
             // The innermost container closed just before `position`.
             nodes[container].len = children as u32;

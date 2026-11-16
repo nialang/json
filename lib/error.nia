@@ -11,10 +11,13 @@ pub enum Code {
     UnexpectedToken,
     // Something other than whitespace follows the top-level value.
     TrailingContent,
+    // An object member's key is not followed by `:`.
     ExpectedColon,
+    // A member or element is not followed by `,` or the container's close.
     ExpectedCommaOrEnd,
     // An object member does not start with a string.
     ExpectedKey,
+    // A number breaks the RFC 8259 grammar, such as `01`, `1.`, or `-`.
     InvalidNumber,
     // A backslash is followed by a byte that starts no escape.
     InvalidEscape,

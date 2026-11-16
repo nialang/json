@@ -15,6 +15,7 @@ pub struct Number {
 pub enum NumberError {
     // The number has a fraction or an exponent.
     NotInteger,
+    // The integer does not fit in the requested type.
     OutOfRange,
 }
 
@@ -56,7 +57,8 @@ extend Number {
         }
         if self.isNegative() {
             // `-0` is zero; every other negative integer is out of range.
-            return if self.bytes.len() == 2 and self.bytes[1] == b'0' { !0 } else { .OutOfRange! };
+            let negativeZero = self.bytes.len() == 2 and self.bytes[1] == b'0';
+            return if negativeZero { !0 } else { .OutOfRange! };
         }
         magnitude(self.bytes, u64::MAX)
     }

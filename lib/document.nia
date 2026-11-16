@@ -90,13 +90,17 @@ extend Options {
     }
 }
 
+// Where a document is in its life: it parses any number of times, then
+// releases its storage once.
 enum State {
     // No parsed value: never parsed, cleared, or the last parse failed.
     Empty,
+    // Holds the value of the last parse.
     Parsed,
     // A `deinit` failed. Storage is still owned and `deinit` may be retried,
     // but the document cannot parse again.
     Retired,
+    // All storage is released.
     Released,
 }
 
@@ -117,6 +121,7 @@ pub struct Document {
 }
 
 extend Document {
+    // An empty document that owns no storage yet.
     pub fun init() Document {
         .{
             image: .init(),
