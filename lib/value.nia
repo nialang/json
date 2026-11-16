@@ -1,0 +1,259 @@
+// Read-only views into a parsed document.
+//
+// Every view borrows the document and is invalidated by its next `parse`,
+// `clear`, or `deinit`. Views are small and copied freely.
+
+using std::io;
+using std::slice;
+using root::document::Document;
+using root::number::Number;
+using root::pointer;
+using root::pointer::PointerError;
+using root::tape::{Kind, Node};
+using root::write;
+using root::write::WriteOptions;
+
+// A value in a parsed document.
+pub struct Value {
+    document: &Document,
+    index: usize,
+}
+
+// An array value.
+pub struct Array {
+    document: &Document,
+    index: usize,
+}
+
+// An object value. Members keep their input order, and duplicate keys are
+// kept as written.
+pub struct Object {
+    document: &Document,
+    index: usize,
+}
+
+// One name and value of an object.
+pub struct Member {
+    key: &[u8],
+    value: Value,
+}
+
+// The elements of an array, in order.
+pub struct Elements {
+    document: &Document,
+    next: usize,
+    end: usize,
+}
+
+// The members of an object, in input order.
+pub struct Members {
+    document: &Document,
+    next: usize,
+    end: usize,
+}
+
+extend Value {
+    pub(root) fun at(document: &Document, index: usize) Value {
+        .{ document, index }
+    }
+
+    pub(root) fun node(self) Node {
+        self.document.node(self.index)
+    }
+
+    pub(root) fun document(self) &Document {
+        self.document
+    }
+
+    pub(root) fun index(self) usize {
+        self.index
+    }
+
+    // What kind of value this is; the `as` methods below give its contents.
+    pub fun kind(self) Kind {
+        self.node().kind
+    }
+
+    pub fun isNull(self) bool {
+        self.kind() == Kind::Null
+    }
+
+    pub fun asBool(self) ?bool {
+        let node = self.node();
+        if node.kind == Kind::Boolean { ?(node.flags != 0) } else { null }
+    }
+
+    // The number as written, for exact or checked conversion.
+    pub fun asNumber(self) ?Number {
+        let node = self.node();
+        if node.kind == Kind::Number {
+            ?Number::init(node.bytes(self.document.image()), node.flags)
+        } else {
+            null
+        }
+    }
+
+    // The decoded UTF-8 bytes of a string.
+    pub fun asString(self) ?&[u8] {
+        let node = self.node();
+        if node.kind == Kind::String { ?node.bytes(self.document.image()) } else { null }
+    }
+
+    pub fun asArray(self) ?Array {
+        if self.kind() == Kind::Array {
+            ?Array { document: self.document, index: self.index }
+        } else {
+            null
+        }
+    }
+
+    pub fun asObject(self) ?Object {
+        if self.kind() == Kind::Object {
+            ?Object { document: self.document, index: self.index }
+        } else {
+            null
+        }
+    }
+
+    // The value that RFC 6901 JSON Pointer `path` selects within this one.
+    // The empty pointer selects this value. An object step takes the last
+    // member with a matching name.
+    pub fun pointer(self, path: &[u8]) PointerError!Value {
+        pointer::resolve(self, path)
+    }
+
+    // Writes the value and everything in it, without allocating. Numbers are
+    // written exactly as they were read. A failed write may leave a partial
+    // document in `output`.
+    pub fun writeTo[W](self, output: &mut W, options: WriteOptions) [W as io::Writer]::Error!()
+    where W: io::Writer
+    {
+        write::writeValue(self, output, options)
+    }
+}
+
+extend Array {
+    pub fun len(self) usize {
+        self.document.node(self.index).len as usize
+    }
+
+    pub fun isEmpty(self) bool {
+        self.len() == 0
+    }
+
+    // The element at `index`. Elements are found by walking the array, so
+    // iterate with `iter` to visit many of them.
+    pub fun get(self, index: usize) ?Value {
+        let mut elements = self.iter();
+        for _ in 0..index {
+            if elements.next() is null {
+                return null;
+            }
+        }
+        elements.next()
+    }
+
+    pub fun iter(self) Elements {
+        let node = self.document.node(self.index);
+        .{ document: self.document, next: self.index + 1, end: node.data as usize }
+    }
+
+    pub fun asValue(self) Value {
+        Value::at(self.document, self.index)
+    }
+}
+
+extend Object {
+    // The number of members, counting duplicate keys.
+    pub fun len(self) usize {
+        self.document.node(self.index).len as usize
+    }
+
+    pub fun isEmpty(self) bool {
+        self.len() == 0
+    }
+
+    // The value of the last member named `key`, as most JSON readers do for
+    // duplicate keys. Members are found by walking the object.
+    pub fun get(self, key: &[u8]) ?Value {
+        let mut found: ?Value = null;
+        let mut members = self.iter();
+        loop {
+            let member = match members.next() {
+                ?member => member,
+                null => break,
+            };
+            if member.key.equals(key) {
+                found = ?member.value;
+            }
+        }
+        found
+    }
+
+    pub fun iter(self) Members {
+        let node = self.document.node(self.index);
+        .{ document: self.document, next: self.index + 1, end: node.data as usize }
+    }
+
+    pub fun asValue(self) Value {
+        Value::at(self.document, self.index)
+    }
+}
+
+extend Member {
+    // The decoded UTF-8 bytes of the member's name.
+    pub fun key(self) &[u8] {
+        self.key
+    }
+
+    pub fun value(self) Value {
+        self.value
+    }
+}
+
+extend Elements : Iterator {
+    type Item = Value;
+
+    pub fun next(&mut self) ?Value {
+        if self.next == self.end {
+            return null;
+        }
+        let index = self.next;
+        self.next = self.document.node(index).subtreeEnd(index);
+        ?Value::at(self.document, index)
+    }
+}
+
+extend Members : Iterator {
+    type Item = Member;
+
+    pub fun next(&mut self) ?Member {
+        if self.next == self.end {
+            return null;
+        }
+        let keyIndex = self.next;
+        let key = self.document.node(keyIndex).bytes(self.document.image());
+        let valueIndex = keyIndex + 1;
+        self.next = self.document.node(valueIndex).subtreeEnd(valueIndex);
+        ?.{ key, value: Value::at(self.document, valueIndex) }
+    }
+}
+
+extend Array : Iterable {
+    type Item = Value;
+    type Iter = Elements;
+
+    pub fun iter(&self) Elements {
+        self.*.iter()
+    }
+}
+
+extend Object : Iterable {
+    type Item = Member;
+    type Iter = Members;
+
+    pub fun iter(&self) Members {
+        self.*.iter()
+    }
+}
+

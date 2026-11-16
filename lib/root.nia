@@ -1,0 +1,24 @@
+// Strict RFC 8259 JSON for Nia.
+//
+// Parse UTF-8 JSON text into a `Document` and read it through `Value` views,
+// or write values back as JSON text. Parsing is iterative, bounded by
+// `Options`, and allocates only through the allocator it is given.
+
+pub(root) module document;
+pub(root) module error;
+pub(root) module number;
+pub(root) module pointer;
+pub(root) module value;
+pub(root) module write;
+module lexical;
+module parse;
+module storage;
+module tape;
+
+pub using document::{Document, Options};
+pub using error::{Code, Diagnostic, Error};
+pub using number::{Number, NumberError};
+pub using pointer::PointerError;
+pub using tape::Kind;
+pub using value::{Array, Elements, Member, Members, Object, Value};
+pub using write::WriteOptions;

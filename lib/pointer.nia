@@ -1,0 +1,113 @@
+// RFC 6901 JSON Pointer lookup.
+
+using std::option;
+using root::value::Value;
+
+pub enum PointerError {
+    // The pointer is not empty and does not start with `/`.
+    InvalidPath,
+    // A `~` is not followed by `0` or `1`.
+    InvalidEscape,
+    // A reference token selects no member or element.
+    NotFound,
+    // A token applied to an array is not a canonical decimal index.
+    InvalidArrayIndex,
+}
+
+// The value `pointer` selects within `value`; see `Value::pointer`.
+pub(root) fun resolve(value: Value, pointer: &[u8]) PointerError!Value {
+    if pointer.len() == 0 {
+        return !value;
+    }
+    if pointer[0] != b'/' {
+        return .InvalidPath!;
+    }
+    let mut current = value;
+    let mut start: usize = 1;
+    loop {
+        let mut end = start;
+        while end < pointer.len() and pointer[end] != b'/' {
+            end += 1;
+        }
+        let token = &pointer[start..end];
+        if not validToken(token) {
+            return .InvalidEscape!;
+        }
+        current = select(current, token).?;
+        if end == pointer.len() {
+            return !current;
+        }
+        start = end + 1;
+    }
+}
+
+fun select(container: Value, token: &[u8]) PointerError!Value {
+    if container.asObject() is ?object {
+        let mut found: ?Value = null;
+        for member in object {
+            if tokenEquals(token, member.key()) {
+                found = ?member.value();
+            }
+        }
+        return found.okOr(PointerError::NotFound);
+    }
+    if container.asArray() is ?array {
+        return array.get(arrayIndex(token).?).okOr(PointerError::NotFound);
+    }
+    .NotFound!
+}
+
+fun validToken(token: &[u8]) bool {
+    let mut index: usize = 0;
+    while index < token.len() {
+        if token[index] == b'~' {
+            index += 1;
+            if index == token.len() or (token[index] != b'0' and token[index] != b'1') {
+                return false;
+            }
+        }
+        index += 1;
+    }
+    true
+}
+
+// Compares an escaped reference token with an unescaped name. The token has
+// passed `validToken`, so every `~` is followed by `0` or `1`.
+fun tokenEquals(token: &[u8], name: &[u8]) bool {
+    let mut read: usize = 0;
+    let mut matched: usize = 0;
+    while read < token.len() {
+        let byte = if token[read] == b'~' {
+            read += 1;
+            if token[read] == b'0' { b'~' } else { b'/' }
+        } else {
+            token[read]
+        };
+        if matched == name.len() or name[matched] != byte {
+            return false;
+        }
+        read += 1;
+        matched += 1;
+    }
+    matched == name.len()
+}
+
+// An array index: `0`, or decimal digits without a leading zero.
+fun arrayIndex(token: &[u8]) PointerError!usize {
+    if token.len() == 0 or (token.len() > 1 and token[0] == b'0') {
+        return .InvalidArrayIndex!;
+    }
+    let mut value: usize = 0;
+    for &byte in token {
+        if byte < b'0' or byte > b'9' {
+            return .InvalidArrayIndex!;
+        }
+        let digit = (byte - b'0') as usize;
+        if value > (usize::MAX - digit) / 10 {
+            return .InvalidArrayIndex!;
+        }
+        value = value * 10 + digit;
+    }
+    !value
+}
+

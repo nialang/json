@@ -1,0 +1,88 @@
+// Numbers keep the exact text they were written with. Conversions are explicit
+// and say when a value does not fit.
+
+using std::parse;
+using root::tape;
+
+// A number as written in the document. It borrows the document, as `Value`
+// does.
+pub struct Number {
+    bytes: &[u8],
+    flags: u8,
+}
+
+// Why a number has no value of the requested integer type.
+pub enum NumberError {
+    // The number has a fraction or an exponent.
+    NotInteger,
+    OutOfRange,
+}
+
+extend Number {
+    pub(root) fun init(bytes: &[u8], flags: u8) Number {
+        .{ bytes, flags }
+    }
+
+    // The number exactly as written.
+    pub fun raw(self) &[u8] {
+        self.bytes
+    }
+
+    // Whether the number was written without a fraction or exponent.
+    pub fun isInteger(self) bool {
+        (self.flags & tape::integerFlag) != 0
+    }
+
+    pub fun isNegative(self) bool {
+        (self.flags & tape::negativeFlag) != 0
+    }
+
+    // The nearest `f64`, correctly rounded. Too large a magnitude is an
+    // error; too small a magnitude rounds to a signed zero.
+    pub fun toF64(self) parse::Error!f64 {
+        self.bytes.parse[f64]()
+    }
+
+    // The nearest `f32`, as `toF64` rounds to `f64`.
+    pub fun toF32(self) parse::Error!f32 {
+        self.bytes.parse[f32]()
+    }
+
+    // The value of a number written as an integer, when it fits. `-0` is
+    // zero. No integer is rounded: a value that does not fit is an error.
+    pub fun toU64(self) NumberError!u64 {
+        if not self.isInteger() {
+            return .NotInteger!;
+        }
+        if self.isNegative() {
+            // `-0` is zero; every other negative integer is out of range.
+            return if self.bytes.len() == 2 and self.bytes[1] == b'0' { !0 } else { .OutOfRange! };
+        }
+        magnitude(self.bytes, u64::MAX)
+    }
+
+    // The value of a number written as an integer, when it fits.
+    pub fun toI64(self) NumberError!i64 {
+        if not self.isInteger() {
+            return .NotInteger!;
+        }
+        if self.isNegative() {
+            let value = magnitude(&self.bytes[1..], 1u64 << 63).?;
+            return if value == 1u64 << 63 { !i64::MIN } else { !(-(value as i64)) };
+        }
+        !(magnitude(self.bytes, i64::MAX as u64).? as i64)
+    }
+}
+
+// The value of a run of decimal digits, if it is at most `limit`.
+fun magnitude(digits: &[u8], limit: u64) NumberError!u64 {
+    let mut value: u64 = 0;
+    for &byte in digits {
+        let digit = (byte - b'0') as u64;
+        if value > (limit - digit) / 10 {
+            return .OutOfRange!;
+        }
+        value = value * 10 + digit;
+    }
+    !value
+}

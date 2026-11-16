@@ -1,0 +1,88 @@
+// Parse failures.
+
+using std::mem;
+
+// What made the input invalid or exceeded a limit.
+pub enum Code {
+    // The text ends inside a value.
+    UnexpectedEnd,
+    // A byte that cannot start a value, or a misspelled `true`, `false`, or
+    // `null`.
+    UnexpectedToken,
+    // Something other than whitespace follows the top-level value.
+    TrailingContent,
+    ExpectedColon,
+    ExpectedCommaOrEnd,
+    // An object member does not start with a string.
+    ExpectedKey,
+    InvalidNumber,
+    // A backslash is followed by a byte that starts no escape.
+    InvalidEscape,
+    // A `\u` escape is not followed by four hexadecimal digits.
+    InvalidUnicodeEscape,
+    // A `\u` escape of a surrogate is not one half of a pair.
+    UnpairedSurrogate,
+    // A string holds a byte below 0x20, which must be escaped.
+    ControlCharacter,
+    // The text is not well-formed UTF-8.
+    InvalidUtf8,
+    // A limit in `Options` is exceeded: nesting, values, input length, the
+    // decoded length of a string, or the length of a number.
+    DepthLimit,
+    NodeLimit,
+    InputLimit,
+    StringLimit,
+    NumberLimit,
+}
+
+// Where parsing stopped. Offsets and columns count UTF-8 bytes; lines and
+// columns start at one.
+pub struct Diagnostic {
+    code: Code,
+    offset: usize,
+    line: usize,
+    column: usize,
+}
+
+extend Diagnostic {
+    // Locates `offset` in `input`. Only a failed parse pays for the scan.
+    pub(root) fun at(code: Code, input: &[u8], offset: usize) Diagnostic {
+        let mut line: usize = 1;
+        let mut lineStart: usize = 0;
+        let end = if offset < input.len() { offset } else { input.len() };
+        for index in 0..end {
+            if input[index] == b'\n' {
+                line += 1;
+                lineStart = index + 1;
+            }
+        }
+        .{ code, offset, line, column: offset - lineStart + 1 }
+    }
+
+    pub fun code(&self) Code {
+        self.code
+    }
+
+    pub fun offset(&self) usize {
+        self.offset
+    }
+
+    pub fun line(&self) usize {
+        self.line
+    }
+
+    pub fun column(&self) usize {
+        self.column
+    }
+}
+
+// Why a parse failed. After any of them the document holds no value.
+pub enum Error {
+    // The input is not JSON, or it exceeds a limit in `Options`.
+    Syntax(Diagnostic),
+    // The allocator could not provide storage. The document still owns what
+    // it allocated before, and may parse again.
+    Allocation(mem::Error),
+    // The document was retired by a failed `deinit`; only `deinit` remains.
+    InvalidState,
+}

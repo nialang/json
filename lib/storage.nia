@@ -1,0 +1,96 @@
+// Capacity that the parser writes into by index.
+//
+// `Growable` owns one allocation used as plain capacity; the owner of the
+// elements tracks how many are live. Growth copies the live prefix into a
+// larger allocation. A failed release of the old allocation keeps it as
+// `retired`, so `deinit` can retry it: no allocation is ever dropped.
+
+using std::cmp;
+using std::error;
+using std::mem;
+using std::option;
+using std::slice;
+using std::result;
+
+pub(root) struct Growable[T]
+where T: Sized
+{
+    current: ?mem::SliceAllocation[T],
+    retired: ?mem::SliceAllocation[T],
+}
+
+extend[T] Growable[T]
+where T: Sized
+{
+    pub(root) fun init() Growable[T] {
+        .{ current: null, retired: null }
+    }
+
+    pub(root) fun capacity(&self) usize {
+        match self.current {
+            ?allocation => allocation.len(),
+            null => 0,
+        }
+    }
+
+    // Every element of the capacity, live or not.
+    pub(root) fun asSlice(&self) &[T] {
+        match self.current {
+            ?allocation => allocation.asSlice(),
+            null => &[],
+        }
+    }
+
+    pub(root) fun asMutSlice(&mut self) &mut [T] {
+        match self.current {
+            ?mut allocation => allocation.asMutSlice(),
+            null => &mut [],
+        }
+    }
+
+    // Grows to at least `capacity` elements, keeping the first `live`.
+    pub(root) fun ensure(
+        &mut self,
+        allocator: &mut mem::Allocator,
+        live: usize,
+        capacity: usize,
+    ) mem::Error!() {
+        if capacity <= self.capacity() {
+            return !();
+        }
+        // An earlier failed release must succeed before another can wait.
+        self.releaseRetired(allocator).?;
+        let doubled = self.capacity().checkedMul(2).okOr(mem::Error::OutOfMemory).?;
+        let mut next = allocator.allocSlice[T](cmp::max(capacity, doubled)).?;
+        _ = next.asMutSlice().copyFrom(&self.asSlice()[0..live]);
+        if self.current is ?mut old {
+            if old.deinit(allocator) is error! {
+                self.retired = ?old;
+            }
+        }
+        self.current = ?next;
+        !()
+    }
+
+    pub(root) fun deinit(&mut self, allocator: &mut mem::Allocator) mem::Error!() {
+        let mut cleanup: error::CleanupAccumulator[mem::Error] = .init();
+        cleanup.attempt(self.releaseRetired(allocator));
+        if self.current is ?mut allocation {
+            let released = allocation.deinit(allocator);
+            if released.isSuccess() {
+                self.current = null;
+            }
+            cleanup.attempt(released);
+        }
+        cleanup.finish()
+    }
+
+    fun releaseRetired(&mut self, allocator: &mut mem::Allocator) mem::Error!() {
+        if self.retired is ?mut allocation {
+            allocation.deinit(allocator).?;
+            self.retired = null;
+        }
+        !()
+    }
+}
+

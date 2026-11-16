@@ -1,0 +1,54 @@
+// The document's value tape.
+//
+// Values are stored in preorder: a container is followed by its contents, and
+// an object's contents alternate key and value. A container records the index
+// just past its subtree, so a reader skips a whole subtree in one step.
+// Strings, keys, and numbers refer to bytes of the document's input image by
+// offset, never by pointer, so the document may move.
+
+// The kind of a JSON value.
+pub enum Kind {
+    Null,
+    Boolean,
+    Number,
+    String,
+    Array,
+    Object,
+}
+
+pub(root) struct Node {
+    kind: Kind,
+    // Boolean: its value. Number: `negativeFlag` and `integerFlag`. String or
+    // key: `escapedFlag`.
+    flags: u8,
+    // String or key: decoded byte length. Number: lexeme length.
+    // Array: element count. Object: member count.
+    len: u32,
+    // String, key, or number: offset of its bytes in the input image.
+    // Array or object: index just past the subtree.
+    data: u32,
+}
+
+pub(root) const negativeFlag: u8 = 1;
+pub(root) const integerFlag: u8 = 2;
+// A string or key whose decoded bytes may need escaping when written. Without
+// it the bytes hold no quote, backslash, or control character and are written
+// as they are: a string spelled without escapes cannot hold one, since JSON
+// text allows none of them unescaped.
+pub(root) const escapedFlag: u8 = 1;
+
+extend Node {
+    pub(root) fun bytes(self, image: &[u8]) &[u8] {
+        let start = self.data as usize;
+        &image[start..(start + self.len as usize)]
+    }
+
+    pub(root) fun isContainer(self) bool {
+        self.kind == Kind::Array or self.kind == Kind::Object
+    }
+
+    // The index just past this node's subtree.
+    pub(root) fun subtreeEnd(self, index: usize) usize {
+        if self.isContainer() { self.data as usize } else { index + 1 }
+    }
+}

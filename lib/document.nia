@@ -1,0 +1,205 @@
+// The parsed document and the limits that bound parsing.
+
+using std::error;
+using std::mem;
+using std::result;
+using root::error::Error;
+using root::parse;
+using root::storage::Growable;
+using root::tape;
+using root::value::Value;
+
+// Bounds on the work and memory one parse may use. The defaults accept any
+// document up to 64 MiB nested at most 128 levels.
+pub struct Options {
+    maxDepth: usize,
+    maxNodes: usize,
+    maxInputBytes: usize,
+    maxStringBytes: usize,
+    maxNumberBytes: usize,
+}
+
+extend Options {
+    // The default limits.
+    pub fun init() Options {
+        .{
+            maxDepth: 128,
+            maxNodes: 1000000,
+            maxInputBytes: 64 * 1024 * 1024,
+            maxStringBytes: 16 * 1024 * 1024,
+            maxNumberBytes: 4096,
+        }
+    }
+
+    // Containers may nest at most this deep; a document of only scalars has
+    // depth zero.
+    pub fun withMaxDepth(self, value: usize) Options {
+        let mut options = self;
+        options.maxDepth = value;
+        options
+    }
+
+    // Values the document may hold, counting object keys as values.
+    pub fun withMaxNodes(self, value: usize) Options {
+        let mut options = self;
+        options.maxNodes = value;
+        options
+    }
+
+    // The length of the input in bytes. Inputs are limited to 4 GiB in any
+    // case, since the tape records offsets in 32 bits.
+    pub fun withMaxInputBytes(self, value: usize) Options {
+        let mut options = self;
+        options.maxInputBytes = value;
+        options
+    }
+
+    // The decoded length of any one string or key.
+    pub fun withMaxStringBytes(self, value: usize) Options {
+        let mut options = self;
+        options.maxStringBytes = value;
+        options
+    }
+
+    // The length of any one number as written.
+    pub fun withMaxNumberBytes(self, value: usize) Options {
+        let mut options = self;
+        options.maxNumberBytes = value;
+        options
+    }
+
+    // The limits as set.
+    pub fun maxDepth(&self) usize {
+        self.maxDepth
+    }
+
+    pub fun maxNodes(&self) usize {
+        self.maxNodes
+    }
+
+    pub fun maxInputBytes(&self) usize {
+        self.maxInputBytes
+    }
+
+    pub fun maxStringBytes(&self) usize {
+        self.maxStringBytes
+    }
+
+    pub fun maxNumberBytes(&self) usize {
+        self.maxNumberBytes
+    }
+}
+
+enum State {
+    // No parsed value: never parsed, cleared, or the last parse failed.
+    Empty,
+    Parsed,
+    // A `deinit` failed. Storage is still owned and `deinit` may be retried,
+    // but the document cannot parse again.
+    Retired,
+    Released,
+}
+
+// A parsed JSON value and the storage that backs it.
+//
+// The document owns a copy of its input, in which strings are decoded in
+// place, and a tape of values. `Value` views borrow the document: parsing
+// again, `clear`, and `deinit` invalidate them. Storage is reused by later
+// parses. A document owns allocations and must not be copied; release it with
+// `deinit` on the allocator it parsed with.
+pub struct Document {
+    image: Growable[u8],
+    imageLen: usize,
+    nodes: Growable[tape::Node],
+    nodeCount: usize,
+    frames: Growable[parse::Frame],
+    state: State,
+}
+
+extend Document {
+    pub fun init() Document {
+        .{
+            image: .init(),
+            imageLen: 0,
+            nodes: .init(),
+            nodeCount: 0,
+            frames: .init(),
+            state: .Empty,
+        }
+    }
+
+    // Parses `input` with the default `Options`. See `parseWith`.
+    pub fun parse(&mut self, allocator: &mut mem::Allocator, input: &[u8]) Error!() {
+        parse::parseDocument(self, allocator, input, Options::init())
+    }
+
+    // Parses `input`, replacing any value the document held and reusing its
+    // storage. The input is copied; it may change or go away afterwards. On
+    // failure the document holds no value.
+    pub fun parseWith(
+        &mut self,
+        allocator: &mut mem::Allocator,
+        input: &[u8],
+        options: Options,
+    ) Error!() {
+        parse::parseDocument(self, allocator, input, options)
+    }
+
+    // The top-level value, or `null` when the document holds none.
+    pub fun value(&self) ?Value {
+        if self.state == State::Parsed { ?Value::at(self, 0) } else { null }
+    }
+
+    // Values in the document, counting object keys as values.
+    pub fun nodeCount(&self) usize {
+        if self.state == State::Parsed { self.nodeCount } else { 0 }
+    }
+
+    // Forgets the parsed value and keeps the storage for the next parse.
+    pub fun clear(&mut self) () {
+        if self.state == State::Parsed {
+            self.state = .Empty;
+        }
+        self.imageLen = 0;
+        self.nodeCount = 0;
+    }
+
+    // Releases the storage. When the allocator fails to release some of it,
+    // the document keeps that storage and only `deinit` may be called again,
+    // to retry; it releases nothing twice.
+    pub fun deinit(&mut self, allocator: &mut mem::Allocator) mem::Error!() {
+        if self.state == State::Released {
+            return !();
+        }
+        self.clear();
+        let mut cleanup: error::CleanupAccumulator[mem::Error] = .init();
+        cleanup.attempt(self.frames.deinit(allocator));
+        cleanup.attempt(self.nodes.deinit(allocator));
+        cleanup.attempt(self.image.deinit(allocator));
+        let result = cleanup.finish();
+        self.state = if result.isSuccess() { .Released } else { .Retired };
+        result
+    }
+
+    pub(root) fun canParse(&self) bool {
+        self.state == State::Empty or self.state == State::Parsed
+    }
+
+    pub(root) fun finishParse(&mut self, imageLen: usize, nodeCount: usize) () {
+        self.imageLen = imageLen;
+        self.nodeCount = nodeCount;
+        self.state = .Parsed;
+    }
+
+    pub(root) fun image(&self) &[u8] {
+        &self.image.asSlice()[0..self.imageLen]
+    }
+
+    pub(root) fun nodes(&self) &[tape::Node] {
+        &self.nodes.asSlice()[0..self.nodeCount]
+    }
+
+    pub(root) fun node(&self, index: usize) tape::Node {
+        self.nodes.asSlice()[index]
+    }
+}

@@ -1,0 +1,117 @@
+// Reads a service configuration from JSON text: fields by name and by JSON
+// Pointer, numbers converted with range checks, an array walked in order, and
+// the document written back indented.
+//
+// Run it with `nia build run-config`.
+using std::builtin;
+using std::io;
+using std::mem;
+using std::option;
+using std::process;
+using std::result;
+using json;
+
+static text = b"{\"name\":\"api\",\"port\":8080,\"hosts\":[\"a.example\",\"b.example\"],\"limits\":{\"memory\":536870912,\"cpu\":1.5}}";
+
+// The fields the configuration needs. They are statics because an error that
+// names one outlives `read`, and a literal written inside a function lives
+// only while it runs.
+static nameField = b"name";
+static portField = b"port";
+static hostsField = b"hosts";
+static memoryPointer = b"/limits/memory";
+
+// Why the configuration could not be read.
+enum ConfigError {
+    // The text is not JSON, or the allocator failed.
+    Json(json::Error),
+    // The top-level value is not an object.
+    NotObject,
+    // A field is missing or has the wrong kind of value.
+    Field(&[u8]),
+    // A number does not fit its field.
+    Range(&[u8]),
+}
+
+// A parse error converts into the configuration error, so `.?` propagates it.
+// The conversion is declared here, where `ConfigError` is defined.
+extend json::Error : builtin::IntoError[ConfigError] {
+    fun intoError(self) ConfigError {
+        .Json(self)
+    }
+}
+
+// The configuration. It borrows the document it was read from.
+struct Config {
+    name: &[u8],
+    port: u16,
+    hosts: json::Array,
+    memory: u64,
+}
+
+// The member `name` of `object`.
+fun field(object: json::Object, name: &[u8]) ConfigError!json::Value {
+    object.get(name).okOr(ConfigError::Field(name))
+}
+
+// The integer `value` of the field `name`, which must be at most `max`.
+fun integer(value: json::Value, name: &[u8], max: u64) ConfigError!u64 {
+    let number = value.asNumber().okOr(ConfigError::Field(name)).?;
+    match number.toU64() {
+        !n => if n <= max { !n } else { ConfigError::Range(name)! },
+        _! => ConfigError::Range(name)!,
+    }
+}
+
+// Parses `input` into `document` and reads the configuration from it.
+fun read(document: &mut json::Document, allocator: &mut mem::Allocator, input: &[u8]) ConfigError!Config {
+    document.parse(allocator, input).?;
+    let top = document.value().okOr(ConfigError::NotObject).?;
+    let fields = top.asObject().okOr(ConfigError::NotObject).?;
+    let name = field(fields, nameField).?.asString().okOr(ConfigError::Field(nameField)).?;
+    let port = integer(field(fields, portField).?, portField, 65535).?;
+    let hosts = field(fields, hostsField).?.asArray().okOr(ConfigError::Field(hostsField)).?;
+    // A pointer reaches into nested objects in one step. Its error does not
+    // name the field, so the field is supplied here.
+    let limit = top.pointer(memoryPointer).mapError(\_ -> ConfigError::Field(memoryPointer)).?;
+    let memory = integer(limit, memoryPointer, u64::MAX).?;
+    !.{ name, port: port as u16, hosts, memory }
+}
+
+pub fun main(init: process::Init) process::ExitCode!() {
+    _ = init;
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer allocator.deinit().?;
+    // A document owns its storage; release it on the allocator it used.
+    let mut document = json::Document::init();
+    defer document.deinit(allocator).?;
+
+    let config = match read(&mut document, allocator, text) {
+        !config => config,
+        .Json(json::Error::Syntax(diagnostic))! => {
+            io::debugPrint("not JSON: line {} column {}\n", [diagnostic.line(), diagnostic.column()]).?;
+            return process::ExitCode(1)!;
+        },
+        .Field(name)! => {
+            io::debugPrint("missing or mistyped field: {}\n", [name]).?;
+            return process::ExitCode(1)!;
+        },
+        _! => return process::ExitCode(1)!,
+    };
+    io::debugPrint("{} listens on port {} with {} bytes\n", [config.name, config.port, config.memory]).?;
+    for host in config.hosts {
+        if host.asString() is ?name {
+            io::debugPrint("host {}\n", [name]).?;
+        }
+    }
+
+    // The document again, written back indented by two spaces.
+    let mut buffer: [u8; 512] = [0; 512];
+    let mut stdout = io::FileWriter::stdout(buffer);
+    let top = document.value().okOr(process::ExitCode(1)).?;
+    top.writeTo(&mut stdout, json::WriteOptions::pretty(2)).?;
+    stdout.writeAll(b"\n").?;
+    stdout.flush().?;
+    !()
+}

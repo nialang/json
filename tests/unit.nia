@@ -1,0 +1,853 @@
+using std;
+using std::io;
+using std::mem;
+using std::option;
+using std::process;
+using std::result;
+using std::slice;
+using std::source;
+using std::test;
+using json;
+
+// Parses `input` into `document` and returns its value.
+@[trackCaller]
+fun parsed(document: &mut json::Document, allocator: &mut mem::Allocator, input: &[u8]) test::Error!json::Value {
+    document.parse(allocator, input).?;
+    test::expectSome(document.value())
+}
+
+// Writes `value` compactly and compares the text with `expected`.
+fun expectWritten(value: json::Value, options: json::WriteOptions, expected: &[u8]) test::Error!() {
+    let mut bytes: [u8; 256] = [0; 256];
+    let mut output = io::FixedBufferWriter::init(bytes);
+    value.writeTo(&mut output, options).?;
+    test::expect(output.written().equals(expected))
+}
+
+fun expectCode(
+    document: &mut json::Document,
+    allocator: &mut mem::Allocator,
+    input: &[u8],
+    expected: json::Code,
+) test::Error!() {
+    match test::expectError(document.parse(allocator, input)).? {
+        .Syntax(diagnostic) => test::expectEqual(diagnostic.code(), expected),
+        _ => test::fail(),
+    }
+}
+
+fun readsObjectsAndArrays() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let input = b"{\"a\":[true,null,1],\"a\":\"last\",\"items\":[true,null,1]}";
+    let object = test::expectSome(parsed(document, allocator, input).?.asObject()).?;
+    test::expectEqual(object.len(), 3).?;
+    // Duplicate keys are kept in order; lookup takes the last.
+    let text = test::expectSome(test::expectSome(object.get(b"a")).?.asString()).?;
+    test::expect(text.equals(b"last")).?;
+    test::expect(object.get(b"missing").isNull()).?;
+    let mut keys: usize = 0;
+    for member in object {
+        if keys == 2 {
+            test::expect(member.key().equals(b"items")).?;
+        }
+        keys += 1;
+    }
+    test::expectEqual(keys, 3).?;
+    let items = test::expectSome(test::expectSome(object.get(b"items")).?.asArray()).?;
+    test::expectEqual(items.len(), 3).?;
+    test::expect(test::expectSome(test::expectSome(items.get(0)).?.asBool()).?).?;
+    test::expect(test::expectSome(items.get(1)).?.isNull()).?;
+    test::expectEqual(test::expectSome(items.get(2)).?.kind(), json::Kind::Number).?;
+    test::expect(items.get(3).isNull()).?;
+    // Typed accessors reject other kinds.
+    test::expect(items.asValue().asObject().isNull()).?;
+    test::expect(items.asValue().asString().isNull()).?;
+    expectWritten(object.asValue(), json::WriteOptions::compact(), input)
+}
+
+fun followsPointers() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let top = parsed(document, allocator, b"{\"items\":[true,null,1],\"a/b~c\":2,\"\":{\"\":3}}").?;
+    test::expectEqual(top.pointer(b"/items/2").?.kind(), json::Kind::Number).?;
+    test::expectEqual(top.pointer(b"/a~1b~0c").?.kind(), json::Kind::Number).?;
+    test::expectEqual(top.pointer(b"//").?.kind(), json::Kind::Number).?;
+    test::expectEqual(top.pointer(b"").?.kind(), json::Kind::Object).?;
+    test::expectEqual(test::expectError(top.pointer(b"/items/01")).?, json::PointerError::InvalidArrayIndex).?;
+    test::expectEqual(test::expectError(top.pointer(b"/items/nope")).?, json::PointerError::InvalidArrayIndex).?;
+    test::expectEqual(test::expectError(top.pointer(b"/items/3")).?, json::PointerError::NotFound).?;
+    test::expectEqual(test::expectError(top.pointer(b"items")).?, json::PointerError::InvalidPath).?;
+    test::expectEqual(test::expectError(top.pointer(b"/a~2")).?, json::PointerError::InvalidEscape).?;
+    !()
+}
+
+fun writesCompactAndPretty() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let nested = parsed(document, allocator, b" { \"a\" : { \"b\" : [ 1 , 2 ] } , \"empty\" : [ ] , \"o\" : { } } ").?;
+    expectWritten(nested, json::WriteOptions::compact(), b"{\"a\":{\"b\":[1,2]},\"empty\":[],\"o\":{}}").?;
+    expectWritten(
+        nested,
+        json::WriteOptions::pretty(2),
+        b"{\n  \"a\": {\n    \"b\": [\n      1,\n      2\n    ]\n  },\n  \"empty\": [],\n  \"o\": {}\n}",
+    ).?;
+    let escaped = parsed(document, allocator, b"\"a\\nb\\u0001\\\"\\\\\\/\"").?;
+    expectWritten(escaped, json::WriteOptions::compact(), b"\"a\\nb\\u0001\\\"\\\\/\"").?;
+    expectWritten(parsed(document, allocator, b"[1,2]").?, json::WriteOptions::pretty(2), b"[\n  1,\n  2\n]")
+}
+
+fun decodesStrings() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let clef = test::expectSome(parsed(document, allocator, b"\"\\uD834\\uDD1E\"").?.asString()).?;
+    let clefUtf8: [u8; 4] = [0xf0, 0x9d, 0x84, 0x9e];
+    test::expect(clef.equals(clefUtf8)).?;
+    let rawUtf8: [u8; 4] = [b'"', 0xc3, 0xa9, b'"'];
+    let e = test::expectSome(parsed(document, allocator, rawUtf8).?.asString()).?;
+    let eUtf8: [u8; 2] = [0xc3, 0xa9];
+    test::expect(e.equals(eUtf8)).?;
+    // Escapes before and after long plain runs shift the later bytes.
+    let long = parsed(document, allocator, b"\"\\tabcdefghijklmnopqrstuvwxyz\\n0123456789abcdefghij\\u00e9\"").?;
+    test::expect(test::expectSome(long.asString()).?.equals(b"\tabcdefghijklmnopqrstuvwxyz\n0123456789abcdefghij\xc3\xa9")).?;
+    // Past sixteen escapes the decoded text trails the source by whole chunks.
+    let shifted = parsed(document, allocator, b"\"\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\nabcdefghijklmnopqrstuvwxyz0123456789!\\t#\"").?;
+    test::expect(test::expectSome(shifted.asString()).?.equals(b"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nabcdefghijklmnopqrstuvwxyz0123456789!\t#")).?;
+    !()
+}
+
+// Parses `sequence` inside a string three ways: with four or more bytes after
+// it, after an escape so that decoded bytes are copied, and right before the
+// closing quote. A valid sequence must come back unchanged; an invalid one
+// must be rejected as malformed UTF-8 where it starts.
+fun expectUtf8(
+    document: &mut json::Document,
+    allocator: &mut mem::Allocator,
+    sequence: &[u8],
+    valid: bool,
+) test::Error!() {
+    let prefixes: [&[u8]; 3] = [b"\"", b"\"\\n", b"\""];
+    let suffixes: [&[u8]; 3] = [b"abcd\"", b"abcd\"", b"\""];
+    let decodedPrefixes: [usize; 3] = [0, 1, 0];
+    for index in 0..3 {
+        let mut input: std::ArrayList[u8] = .init();
+        defer { _ = input.deinit(allocator); };
+        input.appendSlice(allocator, prefixes[index]).?;
+        input.appendSlice(allocator, sequence).?;
+        input.appendSlice(allocator, suffixes[index]).?;
+        match document.parse(allocator, input.asSlice()) {
+            !ok => {
+                _ = ok;
+                test::expect(valid).?;
+                let text = test::expectSome(test::expectSome(document.value()).?.asString()).?;
+                let at = decodedPrefixes[index];
+                test::expectEqual(text.len(), at + sequence.len() + suffixes[index].len() - 1).?;
+                test::expect((&text[at..(at + sequence.len())]).equals(sequence)).?;
+            },
+            json::Error::Syntax(diagnostic)! => {
+                test::expect(not valid).?;
+                test::expectEqual(diagnostic.code(), json::Code::InvalidUtf8).?;
+                test::expectEqual(diagnostic.offset(), prefixes[index].len()).?;
+            },
+            _! => return test::fail(),
+        }
+    }
+    !()
+}
+
+// Parses `sequence` inside a string long enough for chunked scanning, after
+// 0 to 19 copies of an ASCII or a two-byte filler, with and without a leading
+// escape that makes decoded bytes trail the source. The sequence so meets
+// every position of a sixteen-byte chunk and every chunk edge. A valid
+// sequence must come back unchanged; an invalid one must be rejected as
+// malformed UTF-8 where it starts.
+fun expectUtf8Placed(
+    document: &mut json::Document,
+    allocator: &mut mem::Allocator,
+    sequence: &[u8],
+    valid: bool,
+) test::Error!() {
+    let fillers: [&[u8]; 2] = [b"x", b"\xc3\xa9"];
+    let escapes: [&[u8]; 2] = [b"", b"\\n"];
+    let decodedEscapes: [&[u8]; 2] = [b"", b"\n"];
+    for &filler in &fillers[..] {
+        for escape in 0..2 {
+            for before in 0..20 {
+                let mut input: std::ArrayList[u8] = .init();
+                defer { _ = input.deinit(allocator); };
+                let mut expected: std::ArrayList[u8] = .init();
+                defer { _ = expected.deinit(allocator); };
+                input.push(allocator, b'"').?;
+                input.appendSlice(allocator, escapes[escape]).?;
+                expected.appendSlice(allocator, decodedEscapes[escape]).?;
+                for _ in 0..before {
+                    input.appendSlice(allocator, filler).?;
+                    expected.appendSlice(allocator, filler).?;
+                }
+                let at = input.len();
+                input.appendSlice(allocator, sequence).?;
+                expected.appendSlice(allocator, sequence).?;
+                for _ in 0..24 {
+                    input.appendSlice(allocator, filler).?;
+                    expected.appendSlice(allocator, filler).?;
+                }
+                input.push(allocator, b'"').?;
+                match document.parse(allocator, input.asSlice()) {
+                    !ok => {
+                        _ = ok;
+                        test::expect(valid).?;
+                        let text = test::expectSome(test::expectSome(document.value()).?.asString()).?;
+                        test::expect(text.equals(expected.asSlice())).?;
+                    },
+                    json::Error::Syntax(diagnostic)! => {
+                        test::expect(not valid).?;
+                        test::expectEqual(diagnostic.code(), json::Code::InvalidUtf8).?;
+                        test::expectEqual(diagnostic.offset(), at).?;
+                    },
+                    _! => return test::fail(),
+                }
+            }
+        }
+    }
+    !()
+}
+
+fun checksUtf8() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    // The edges of each well-formed range (RFC 3629, table 3-7).
+    let valid: [&[u8]; 11] = [
+        b"\xc2\x80", b"\xdf\xbf", b"\xe0\xa0\x80", b"\xe0\xbf\xbf", b"\xe1\x80\x80",
+        b"\xed\x9f\xbf", b"\xee\x80\x80", b"\xef\xbf\xbf", b"\xf0\x90\x80\x80",
+        b"\xf3\xbf\xbf\xbf", b"\xf4\x8f\xbf\xbf",
+    ];
+    for &sequence in &valid[..] {
+        expectUtf8(document, allocator, sequence, true).?;
+        expectUtf8Placed(document, allocator, sequence, true).?;
+    }
+    // Lone and stray bytes, overlong forms, surrogates, values past U+10FFFF,
+    // bad continuation bytes in each position, and truncated sequences.
+    let invalid: [&[u8]; 22] = [
+        b"\x80", b"\xbf", b"\xc0\x80", b"\xc1\xbf", b"\xe0\x80\x80", b"\xe0\x9f\xbf",
+        b"\xed\xa0\x80", b"\xed\xbf\xbf", b"\xf0\x80\x80\x80", b"\xf0\x8f\xbf\xbf",
+        b"\xf4\x90\x80\x80", b"\xf5\x80\x80\x80", b"\xf8\x88\x80\x80", b"\xff",
+        b"\xc3\x28", b"\xe2\x28\xa1", b"\xe2\x82\x28", b"\xf0\x28\x8c\xbc",
+        b"\xf0\x90\x28\xbc", b"\xf0\x90\x8c\x28", b"\xe2\x82", b"\xf0\x90\x8c",
+    ];
+    for &sequence in &invalid[..] {
+        expectUtf8(document, allocator, sequence, false).?;
+        expectUtf8Placed(document, allocator, sequence, false).?;
+    }
+    !()
+}
+
+fun checksGrammarCorpus() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let valid: [&[u8]; 19] = [
+        b"null", b"true", b"false", b"0", b"-0", b"1.25", b"1e+2",
+        b"-0.0", b"1e-7", b"[]", b"{}", b"[1,{\"x\":[]}]",
+        b" \t\r\n42 ", b"\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"",
+        b"\"\"", b"\"plain\"", b"\"\\u0000\"", b"\"\\uD800\\uDC00\"",
+        b"{\"\":[false,0]}",
+    ];
+    for &input in &valid[..] {
+        test::expect(document.parse(allocator, input).isSuccess()).?;
+    }
+    let invalid: [&[u8]; 32] = [
+        b"", b"+1", b".1", b"01", b"-01", b"-", b"1.", b"1e", b"1e+",
+        b"1e-", b"1.0.1", b"00", b"NaN", b"nul", b"tru", b"truex",
+        b"[1,]", b"[1,,2]", b"[1 2]", b"{\"x\":1,}", b"{\"x\" 1}",
+        b"{\"a\":}", b"{1:2}", b"true false", b"\"\\x\"",
+        b"\"\\u12x4\"", b"\"\\uDC00\"", b"\"\\uD800\"",
+        b"\"\\uD800\\u0041\"", b"[", b"{", b"1x",
+    ];
+    for &input in &invalid[..] {
+        test::expect(document.parse(allocator, input).isError()).?;
+        test::expect(document.value().isNull()).?;
+    }
+    let malformed: [[u8; 5]; 5] = [
+        [b'"', 0xc0, 0xaf, b'"', b' '],
+        [b'"', 0x80, b'"', b' ', b' '],
+        [b'"', 0xed, 0xa0, 0x80, b'"'],
+        [b'"', 0xf4, 0x90, 0x80, 0x80],
+        [b'"', 10, b'"', b' ', b' '],
+    ];
+    for &input in &malformed[..] {
+        test::expect(document.parse(allocator, input).isError()).?;
+    }
+    !()
+}
+
+fun reportsDiagnostics() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    match document.parse(allocator, b"[1,\n?]") {
+        json::Error::Syntax(diagnostic)! => {
+            test::expectEqual(diagnostic.code(), json::Code::UnexpectedToken).?;
+            test::expectEqual(diagnostic.line(), 2).?;
+            test::expectEqual(diagnostic.column(), 1).?;
+            test::expectEqual(diagnostic.offset(), 4).?;
+        },
+        _ => return test::fail(),
+    }
+    expectCode(document, allocator, b"", .UnexpectedEnd).?;
+    expectCode(document, allocator, b"[", .UnexpectedEnd).?;
+    expectCode(document, allocator, b"[1", .ExpectedCommaOrEnd).?;
+    expectCode(document, allocator, b"{", .ExpectedKey).?;
+    expectCode(document, allocator, b"{\"key\"", .ExpectedColon).?;
+    expectCode(document, allocator, b"{\"key\":", .UnexpectedEnd).?;
+    expectCode(document, allocator, b"{\"key\":1", .ExpectedCommaOrEnd).?;
+    expectCode(document, allocator, b"1 2", .TrailingContent).?;
+    expectCode(document, allocator, b"\"\\x\"", .InvalidEscape).?;
+    expectCode(document, allocator, b"\"\\uD800\"", .UnpairedSurrogate).?;
+    expectCode(document, allocator, b"[01]", .InvalidNumber).?;
+    let limits = json::Options::init();
+    test::expect(match document.parseWith(allocator, b"[1,2]", limits.withMaxNodes(2)) {
+        json::Error::Syntax(diagnostic)! => diagnostic.code() == json::Code::NodeLimit,
+        _ => false,
+    }).?;
+    test::expect(match document.parseWith(allocator, b"[[0]]", limits.withMaxDepth(1)) {
+        json::Error::Syntax(diagnostic)! => diagnostic.code() == json::Code::DepthLimit,
+        _ => false,
+    }).?;
+    !()
+}
+
+fun rejectsUseAfterDeinit() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    document.deinit(allocator).?;
+    let failure = test::expectError(document.parse(allocator, b"null")).?;
+    test::expect(match failure { .InvalidState => true, _ => false })
+}
+
+fun convertsNumbers() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let exact = test::expectSome(parsed(document, allocator, b"9007199254740993").?.asNumber()).?;
+    test::expect(exact.isInteger() and not exact.isNegative()).?;
+    test::expectEqual(exact.toU64().?, 9007199254740993u64).?;
+    test::expectEqual(exact.toI64().?, 9007199254740993i64).?;
+    let max = test::expectSome(parsed(document, allocator, b"18446744073709551615").?.asNumber()).?;
+    test::expectEqual(max.toU64().?, u64::MAX).?;
+    test::expectEqual(test::expectError(max.toI64()).?, json::NumberError::OutOfRange).?;
+    let over = test::expectSome(parsed(document, allocator, b"18446744073709551616").?.asNumber()).?;
+    test::expectEqual(test::expectError(over.toU64()).?, json::NumberError::OutOfRange).?;
+    let min = test::expectSome(parsed(document, allocator, b"-9223372036854775808").?.asNumber()).?;
+    test::expectEqual(min.toI64().?, i64::MIN).?;
+    test::expectEqual(test::expectError(min.toU64()).?, json::NumberError::OutOfRange).?;
+    let zero = test::expectSome(parsed(document, allocator, b"-0").?.asNumber()).?;
+    test::expect(zero.isNegative()).?;
+    test::expectEqual(zero.toU64().?, 0u64).?;
+    let fraction = test::expectSome(parsed(document, allocator, b"1.5e3").?.asNumber()).?;
+    test::expect(not fraction.isInteger()).?;
+    test::expectEqual(test::expectError(fraction.toI64()).?, json::NumberError::NotInteger).?;
+    test::expect(fraction.raw().equals(b"1.5e3")).?;
+    !()
+}
+
+// A string is written as its source spelled it when that had no escapes, and
+// escaped again when it had any; either way the text parses back to the same
+// string. Escapes that decode to plain bytes, and keys, take the same path.
+fun writesStringsByTheirSpelling() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let cases: [(&[u8], &[u8]); 7] = [
+        (b"\"plain\"", b"\"plain\""),
+        // Past the short-string fast path, still without escapes.
+        (b"\"a plain string longer than sixteen bytes\"", b"\"a plain string longer than sixteen bytes\""),
+        (b"\"caf\xc3\xa9 \xe2\x82\xac\"", b"\"caf\xc3\xa9 \xe2\x82\xac\""),
+        // An escape of a plain byte decodes to a byte written as it is.
+        (b"\"\\u0041\\/\"", b"\"A/\""),
+        (b"\"tab\\there and a long tail after it\"", b"\"tab\\there and a long tail after it\""),
+        (b"\"\\u001f\\\"\\\\\"", b"\"\\u001f\\\"\\\\\""),
+        (b"{\"k\\ney\":\"v\",\"plain key\":\"\\u0022\"}", b"{\"k\\ney\":\"v\",\"plain key\":\"\\\"\"}"),
+    ];
+    for &(input, expected) in &cases[..] {
+        expectWritten(parsed(document, allocator, input).?, json::WriteOptions::compact(), expected).?;
+    }
+    !()
+}
+
+// Output longer than the writer's stage, of tokens of every short length up
+// to past a block, comes out byte for byte, ending in any part of a block and
+// at the very end of the image; a sink that runs out of room reports it.
+fun writesPastTheStage() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let filler = b"abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmn";
+    let digits = b"12345678901234567890123456789";
+    let mut input: std::ArrayList[u8] = .init();
+    defer { _ = input.deinit(allocator); };
+    input.appendSlice(allocator, b"[").?;
+    for round in 0usize..40 {
+        for len in 0usize..40 {
+            if round != 0 or len != 0 {
+                input.appendSlice(allocator, b",").?;
+            }
+            if (round + len) % 3 == 0 {
+                input.appendSlice(allocator, &digits[0..(len % 20 + 1)]).?;
+            } else if (round + len) % 3 == 1 {
+                input.appendSlice(allocator, b"{\"").?;
+                input.appendSlice(allocator, &filler[0..len]).?;
+                input.appendSlice(allocator, b"\":null}").?;
+            } else {
+                input.appendSlice(allocator, b"\"").?;
+                input.appendSlice(allocator, &filler[0..len]).?;
+                input.appendSlice(allocator, b"\"").?;
+            }
+        }
+    }
+    // The last token ends at the end of the image.
+    input.appendSlice(allocator, b",\"tail\"]").?;
+    let value = parsed(document, allocator, input.asSlice()).?;
+    let mut text = allocator.allocSlice[u8](input.len()).?;
+    defer { _ = text.deinit(allocator); };
+    let mut output = io::FixedBufferWriter::init(text.asMutSlice());
+    value.writeTo(&mut output, json::WriteOptions::compact()).?;
+    test::expect(output.written().equals(input.asSlice())).?;
+    let mut short = io::FixedBufferWriter::init(&mut text.asMutSlice()[0..(input.len() - 1)]);
+    _ = test::expectError(value.writeTo(&mut short, json::WriteOptions::compact())).?;
+    !()
+}
+
+// How a decoded string byte is written: the short escape where JSON has one,
+// `\u00xx` for the other control characters, and the byte itself otherwise.
+fun appendSpelling(text: &mut std::ArrayList[u8], allocator: &mut mem::Allocator, byte: u8) mem::Error!() {
+    let short: u8 = match byte {
+        b'"' => b'"',
+        b'\\' => b'\\',
+        0x08 => b'b',
+        b'\t' => b't',
+        b'\n' => b'n',
+        0x0c => b'f',
+        b'\r' => b'r',
+        _ => 0,
+    };
+    if short != 0 {
+        let escape: [u8; 2] = [b'\\', short];
+        return text.appendSlice(allocator, &escape[..]);
+    }
+    if byte < 0x20 {
+        let hex = b"0123456789abcdef";
+        let escape: [u8; 6] = [b'\\', b'u', b'0', b'0', hex[(byte >> 4) as usize], hex[(byte & 15) as usize]];
+        return text.appendSlice(allocator, &escape[..]);
+    }
+    text.push(allocator, byte)
+}
+
+// Appends `byte` to a JSON source as an escape that decodes to it.
+fun appendEscaped(text: &mut std::ArrayList[u8], allocator: &mut mem::Allocator, byte: u8) mem::Error!() {
+    let hex = b"0123456789ABCDEF";
+    let escape: [u8; 6] = [b'\\', b'u', b'0', b'0', hex[(byte >> 4) as usize], hex[(byte & 15) as usize]];
+    text.appendSlice(allocator, &escape[..])
+}
+
+// Every byte that needs escaping is written correctly at every position of
+// strings of every length up to past two blocks, alone among plain bytes and
+// in runs of mixed escapes, with the output crossing the writer's stage at
+// every kind of point; a sink that runs out of room reports it.
+fun escapesEveryByteAnywhere() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let mut input: std::ArrayList[u8] = .init();
+    defer { _ = input.deinit(allocator); };
+    let mut expected: std::ArrayList[u8] = .init();
+    defer { _ = expected.deinit(allocator); };
+    let mut text: std::ArrayList[u8] = .init();
+    defer { _ = text.deinit(allocator); };
+    // Bytes 0x00..0x1f, the quote and the backslash, then plain ones.
+    let mut specials: [u8; 36] = [0; 36];
+    for code in 0usize..32 {
+        specials[code] = code as u8;
+    }
+    specials[32] = b'"';
+    specials[33] = b'\\';
+    specials[34] = b'/';
+    specials[35] = 0x7f;
+    for round in 0usize..37 {
+        input.clear();
+        expected.clear();
+        input.appendSlice(allocator, b"[").?;
+        expected.appendSlice(allocator, b"[").?;
+        for len in 1usize..41 {
+            for at in 0usize..len {
+                if len != 1 or at != 0 {
+                    input.appendSlice(allocator, b",").?;
+                    expected.appendSlice(allocator, b",").?;
+                }
+                input.appendSlice(allocator, b"\"").?;
+                expected.appendSlice(allocator, b"\"").?;
+                for i in 0usize..len {
+                    // The last round mixes every escape in dense runs.
+                    let byte = if round == 36 {
+                        if (i * 7 + at) % 5 == 0 { b'x' } else { specials[(i + at + len) % 36] }
+                    } else if i == at {
+                        specials[round]
+                    } else {
+                        b'a' + (i % 26) as u8
+                    };
+                    appendEscaped(input, allocator, byte).?;
+                    appendSpelling(expected, allocator, byte).?;
+                }
+                input.appendSlice(allocator, b"\"").?;
+                expected.appendSlice(allocator, b"\"").?;
+            }
+        }
+        input.appendSlice(allocator, b"]").?;
+        expected.appendSlice(allocator, b"]").?;
+        let value = parsed(document, allocator, input.asSlice()).?;
+        text.clear();
+        for _ in 0usize..expected.len() {
+            text.push(allocator, 0).?;
+        }
+        let mut output = io::FixedBufferWriter::init(text.asMutSlice());
+        value.writeTo(&mut output, json::WriteOptions::compact()).?;
+        test::expect(output.written().equals(expected.asSlice())).?;
+        let mut short = io::FixedBufferWriter::init(&mut text.asMutSlice()[0..(expected.len() - 1)]);
+        _ = test::expectError(value.writeTo(&mut short, json::WriteOptions::compact())).?;
+    }
+    !()
+}
+
+// The whitespace bytes, and bytes next to them that are not whitespace.
+const whitespace: [u8; 4] = [b' ', b'\t', b'\n', b'\r'];
+const notWhitespace: [u8; 6] = [0x0b, 0x0c, 0x00, 0x1f, 0x21, 0xa0];
+
+// Appends a whitespace run of `len` bytes, of the one kind `kind` names or,
+// for kind 4, of every kind in turn.
+fun appendRun(text: &mut std::ArrayList[u8], allocator: &mut mem::Allocator, kind: usize, len: usize) mem::Error!() {
+    for i in 0usize..len {
+        text.push(allocator, whitespace[if kind == 4 { i % 4 } else { kind }]).?;
+    }
+    !()
+}
+
+// Whitespace runs of every length up to past four blocks, of each kind and
+// mixed, are skipped wherever the grammar allows them, including at the very
+// end of the input; a byte that is not whitespace ends a run and is reported
+// exactly where it is.
+fun skipsWhitespaceOfAnyLength() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let mut input: std::ArrayList[u8] = .init();
+    defer { _ = input.deinit(allocator); };
+    // A longer document that ends in spaces leaves spaces in the reused
+    // image past every input below, so a run read beyond the input's end
+    // would be taken for indentation.
+    let mut spaced: std::ArrayList[u8] = .init();
+    defer { _ = spaced.deinit(allocator); };
+    spaced.push(allocator, b'0').?;
+    appendRun(spaced, allocator, 0, 2000).?;
+    // Each piece is followed by a run.
+    let pieces: [&[u8]; 10] = [b"", b"{", b"\"k\"", b":", b"[", b"1", b",", b"\"v\"", b"]", b"}"];
+    for kind in 0usize..5 {
+        for len in 0usize..70 {
+            input.clear();
+            for &piece in &pieces[..] {
+                input.appendSlice(allocator, piece).?;
+                appendRun(input, allocator, kind, len).?;
+            }
+            _ = parsed(document, allocator, spaced.asSlice()).?;
+            let value = parsed(document, allocator, input.asSlice()).?;
+            expectWritten(value, json::WriteOptions::compact(), b"{\"k\":[1,\"v\"]}").?;
+            for &bad in &notWhitespace[..] {
+                input.clear();
+                input.appendSlice(allocator, b"[").?;
+                appendRun(input, allocator, kind, len).?;
+                input.push(allocator, bad).?;
+                appendRun(input, allocator, kind, len).?;
+                input.appendSlice(allocator, b"]").?;
+                _ = parsed(document, allocator, spaced.asSlice()).?;
+                match document.parse(allocator, input.asSlice()) {
+                    json::Error::Syntax(diagnostic)! => {
+                        test::expectEqual(diagnostic.code(), json::Code::UnexpectedToken).?;
+                        test::expectEqual(diagnostic.offset(), len + 1).?;
+                    },
+                    _ => return test::fail(),
+                }
+            }
+        }
+    }
+    !()
+}
+
+// Parses `[` `lexeme` then `rest` and describes the outcome: the text written
+// back on success, or the error code and offset.
+fun outcome(
+    document: &mut json::Document,
+    allocator: &mut mem::Allocator,
+    text: &mut std::ArrayList[u8],
+    lexeme: &[u8],
+    rest: &[u8],
+    written: &mut [u8],
+) test::Error!(bool, usize, json::Code, usize) {
+    text.clear();
+    text.push(allocator, b'[').?;
+    text.appendSlice(allocator, lexeme).?;
+    text.appendSlice(allocator, rest).?;
+    match document.parse(allocator, text.asSlice()) {
+        !() => {
+            let value = test::expectSome(document.value()).?;
+            let mut output = io::FixedBufferWriter::init(written);
+            value.writeTo(&mut output, json::WriteOptions::compact()).?;
+            !(true, output.written().len(), json::Code::UnexpectedEnd, 0)
+        },
+        json::Error::Syntax(diagnostic)! => !(false, 0, diagnostic.code(), diagnostic.offset()),
+        _ => {
+            test::fail().?;
+            !(false, 0, json::Code::UnexpectedEnd, 0)
+        },
+    }
+}
+
+// Every spelling of up to four characters from `-019.eE+` is read the same
+// way whether it is followed by sixteen or more bytes, where integers take
+// the fast path, or ends the text, where only the general scanner reads it:
+// accepted or rejected alike, with the same error and offset, and written
+// back the same.
+fun readsNumbersAlikeOnEitherPath() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let mut text: std::ArrayList[u8] = .init();
+    defer { _ = text.deinit(allocator); };
+    let alphabet = b"-019.eE+";
+    let mut long: [u8; 64] = [0; 64];
+    let mut short: [u8; 64] = [0; 64];
+    let mut lexeme: [u8; 4] = [0; 4];
+    for len in 1usize..5 {
+        let mut cases: usize = 1;
+        for _ in 0usize..len {
+            cases *= 8;
+        }
+        for case in 0usize..cases {
+            let mut rest = case;
+            for i in 0usize..len {
+                lexeme[i] = alphabet[rest % 8];
+                rest /= 8;
+            }
+            let spelled = &lexeme[0..len];
+            let fast = outcome(document, allocator, text, spelled, b",0,0,0,0,0,0,0,0,0,0]", &mut long[..]).?;
+            let slow = outcome(document, allocator, text, spelled, b"]", &mut short[..]).?;
+            let (fastOk, fastLen, fastCode, fastOffset) = fast;
+            let (slowOk, slowLen, slowCode, slowOffset) = slow;
+            test::expectEqual(fastOk, slowOk).?;
+            if fastOk {
+                // The number is written as spelled, before the first comma.
+                test::expect((&long[0..(slowLen - 1)]).equals(&short[0..(slowLen - 1)])).?;
+                test::expectEqual(fastLen, slowLen + 20).?;
+            } else {
+                test::expectEqual(fastCode, slowCode).?;
+                test::expectEqual(fastOffset, slowOffset).?;
+            }
+        }
+    }
+    !()
+}
+
+// A document of `n` nodes parses under every node limit of at least `n` and
+// reports `NodeLimit` under every smaller one, whether the tape is full at a
+// key, a value, or a container, and wherever the limit falls against the
+// tape's capacity.
+fun enforcesEveryNodeLimit() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let inputs: [&[u8]; 5] = [
+        b"7",
+        b"[1,[2,[3,[]]],{}]",
+        b"{\"a\":{\"b\":[true,null]},\"c\":\"d\"}",
+        b"[[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]",
+        b"[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]",
+    ];
+    let defaults = json::Options::init();
+    for &input in &inputs[..] {
+        document.parse(allocator, input).?;
+        let nodes = document.nodeCount();
+        for limit in 0..(nodes + 2) {
+            match document.parseWith(allocator, input, defaults.withMaxNodes(limit)) {
+                !ok => {
+                    _ = ok;
+                    test::expect(limit >= nodes).?;
+                    test::expectEqual(document.nodeCount(), nodes).?;
+                },
+                json::Error::Syntax(diagnostic)! => {
+                    test::expect(limit < nodes).?;
+                    test::expectEqual(diagnostic.code(), json::Code::NodeLimit).?;
+                },
+                _! => return test::fail(),
+            }
+        }
+    }
+    !()
+}
+
+// A document reused for a shorter input sees only that input: the bytes the
+// scanners read past its end are padding, not what the previous input left
+// there, so an unterminated string or a number at the end parses exactly as
+// in a fresh document.
+fun reusedStorageEndsAtTheInput() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut reused = json::Document::init();
+    defer { _ = reused.deinit(allocator); };
+    let mut fresh = json::Document::init();
+    defer { _ = fresh.deinit(allocator); };
+    // Quotes and digits everywhere the shorter inputs' windows reach.
+    let filler = b"[\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6]";
+    let inputs: [&[u8]; 8] = [b"\"", b"\"ab", b"[\"a", b"{\"k", b"1", b"-", b"[12", b"{\"k\":9"];
+    for &input in &inputs[..] {
+        test::expect(reused.parse(allocator, filler).isSuccess()).?;
+        let got = reused.parse(allocator, input);
+        let want = fresh.parse(allocator, input);
+        match (got, want) {
+            (!_, !_) => test::expectEqual(reused.nodeCount(), fresh.nodeCount()).?,
+            (json::Error::Syntax(a)!, json::Error::Syntax(b)!) => {
+                test::expectEqual(a.code(), b.code()).?;
+                test::expectEqual(a.offset(), b.offset()).?;
+            },
+            _ => return test::fail(),
+        }
+    }
+    !()
+}
+
+// Every string and number length against every limit near the sixteen bytes
+// a short token can have: a token parses exactly when it fits its limit,
+// whether it is a key, a value, or the top level, and whichever way the
+// other limit makes the parser check short tokens.
+fun enforcesEveryTokenLimit() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let letters = b"abcdefghijklmnopqrstuvwxyz";
+    let digits = b"12345678901234567890";
+    let defaults = json::Options::init();
+    for len in 0usize..20 {
+        for limit in 0usize..20 {
+            let others: [usize; 2] = [0, 4096];
+            for &other in &others[..] {
+                // A string of `len` bytes as key, value, and top level.
+                let string = defaults.withMaxStringBytes(limit).withMaxNumberBytes(other);
+                for shape in 0usize..3 {
+                    let mut input: std::ArrayList[u8] = .init();
+                    defer { _ = input.deinit(allocator); };
+                    if shape == 1 { input.appendSlice(allocator, b"{").?; }
+                    if shape == 2 { input.appendSlice(allocator, b"{\"\":").?; }
+                    input.appendSlice(allocator, b"\"").?;
+                    input.appendSlice(allocator, &letters[0..len]).?;
+                    input.appendSlice(allocator, b"\"").?;
+                    if shape == 1 { input.appendSlice(allocator, b":null}").?; }
+                    if shape == 2 { input.appendSlice(allocator, b"}").?; }
+                    match document.parseWith(allocator, input.asSlice(), string) {
+                        !ok => { _ = ok; test::expect(len <= limit).?; },
+                        json::Error::Syntax(diagnostic)! => {
+                            test::expect(len > limit).?;
+                            test::expectEqual(diagnostic.code(), json::Code::StringLimit).?;
+                        },
+                        _! => return test::fail(),
+                    }
+                }
+                // A number of `len` digits, as element and top level.
+                if len != 0 {
+                    let number = defaults.withMaxNumberBytes(limit).withMaxStringBytes(other);
+                    for shape in 0usize..2 {
+                        let mut input: std::ArrayList[u8] = .init();
+                        defer { _ = input.deinit(allocator); };
+                        if shape == 1 { input.appendSlice(allocator, b"[").?; }
+                        input.appendSlice(allocator, &digits[0..len]).?;
+                        if shape == 1 { input.appendSlice(allocator, b"]").?; }
+                        match document.parseWith(allocator, input.asSlice(), number) {
+                            !ok => { _ = ok; test::expect(len <= limit).?; },
+                            json::Error::Syntax(diagnostic)! => {
+                                test::expect(len > limit).?;
+                                test::expectEqual(diagnostic.code(), json::Code::NumberLimit).?;
+                            },
+                            _! => return test::fail(),
+                        }
+                    }
+                }
+            }
+        }
+    }
+    !()
+}
+
+pub fun main(init: process::Init) process::ExitCode!() {
+    _ = init;
+    let cases: [test::Case; 17] = [
+        .init("objects and arrays", readsObjectsAndArrays),
+        .init("strings written by their spelling", writesStringsByTheirSpelling),
+        .init("output past the stage", writesPastTheStage),
+        .init("every byte escaped anywhere", escapesEveryByteAnywhere),
+        .init("whitespace of any length", skipsWhitespaceOfAnyLength),
+        .init("numbers alike on either path", readsNumbersAlikeOnEitherPath),
+        .init("every node limit", enforcesEveryNodeLimit),
+        .init("reused storage ends at the input", reusedStorageEndsAtTheInput),
+        .init("every token limit", enforcesEveryTokenLimit),
+        .init("JSON pointers", followsPointers),
+        .init("compact and pretty writing", writesCompactAndPretty),
+        .init("string decoding", decodesStrings),
+        .init("UTF-8 validation", checksUtf8),
+        .init("grammar corpus", checksGrammarCorpus),
+        .init("diagnostics", reportsDiagnostics),
+        .init("use after deinit", rejectsUseAfterDeinit),
+        .init("number conversion", convertsNumbers),
+    ];
+    let summary = test::Runner::init(cases).runWith(&mut \result -> {
+        if result.error() is ?cause {
+            _ = io::debugPrint("{}: {}\n", [result.name(), cause]);
+        }
+    });
+    if not summary.isSuccessful() {
+        return process::ExitCode(1)!;
+    }
+    !()
+}

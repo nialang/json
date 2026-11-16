@@ -1,0 +1,240 @@
+using std::io;
+using std::math;
+using std::mem;
+using std::option;
+using std::process;
+using std::result;
+using std::slice;
+using std::test;
+using json;
+
+fun allocationFailuresRetainOwnership() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut backing: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = backing.deinitWithoutLeakCheck(); };
+    let input = b"{\"items\":[[[[[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]]]]],\"text\":\"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\\nb\\uD834\\uDD1E\"}";
+    let mut completed = false;
+    for failAt in 0usize..32usize {
+        let mut allocator = test::FailingAllocator::init(backing);
+        allocator.failAllocationAfter(failAt);
+        let mut document = json::Document::init();
+        let parsed = document.parse(&mut allocator, input);
+        if parsed is error! {
+            test::expect(match parsed { json::Error::Allocation(_)! => true, _ => false }).?;
+            test::expect(document.value().isNull()).?;
+        } else { completed = true; }
+        allocator.clearFailures();
+        test::expect(document.deinit(&mut allocator).isSuccess()).?;
+        test::expectEqual(allocator.activeBlocks(), 0).?;
+        if completed { break; }
+    }
+    test::expect(completed)
+}
+
+fun failedCleanupIsRetryable() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut backing: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = backing.deinitWithoutLeakCheck(); };
+    // Nested deeper than the parser keeps in its own frame, so the document
+    // owns all three of its storages: image, tape, and frame stack.
+    let mut deep: [u8; 101] = [0; 101];
+    for i in 0..50 { deep[i] = b'['; deep[51 + i] = b']'; }
+    deep[50] = b'0';
+    for failAt in 0usize..3usize {
+        let mut allocator = test::FailingAllocator::init(backing);
+        let mut document = json::Document::init();
+        test::expect(document.parse(&mut allocator, deep).isSuccess()).?;
+        test::expectEqual(allocator.activeBlocks(), 3).?;
+        allocator.failFreeAfter(failAt);
+        test::expect(document.deinit(&mut allocator).isError()).?;
+        test::expect(document.value().isNull()).?;
+        document.clear();
+        test::expect(match document.parse(&mut allocator, b"null") {
+            json::Error::InvalidState! => true, _ => false,
+        }).?;
+        allocator.clearFailures();
+        test::expect(document.deinit(&mut allocator).isSuccess()).?;
+        test::expect(document.deinit(&mut allocator).isSuccess()).?;
+        test::expectEqual(allocator.activeBlocks(), 0).?;
+    }
+    !()
+}
+
+fun reusesCapacityAndOwnsInput() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut backing: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = backing.deinitWithoutLeakCheck(); };
+    let mut allocator = test::FailingAllocator::init(backing);
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(&mut allocator); };
+    let mut input: [u8; 9] = b"[\"owned\"]";
+    test::expect(document.parse(&mut allocator, input).isSuccess()).?;
+    input[2] = b'x';
+    let top = test::expectSome(document.value()).?;
+    let value = test::expectSome(test::expectSome(top.asArray()).?.get(0)).?;
+    test::expect(test::expectSome(value.asString()).?.equals(b"owned")).?;
+    let attempts = allocator.allocationAttempts();
+    for _ in 0..100 {
+        test::expect(document.parse(&mut allocator, b"[\"other\"]").isSuccess()).?;
+    }
+    test::expectEqual(allocator.allocationAttempts(), attempts).?;
+    test::expect(document.parse(&mut allocator, b"[").isError()).?;
+    test::expect(document.value().isNull()).?;
+    test::expectEqual(document.nodeCount(), 0).?;
+    test::expect(document.parse(&mut allocator, b"true").isSuccess()).?;
+    document.clear();
+    test::expect(document.value().isNull()).?;
+    !()
+}
+
+fun exactResourceBoundaries() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let defaults = json::Options::init();
+    test::expect(document.parseWith(allocator, b"null", defaults.withMaxDepth(0)).isSuccess()).?;
+    test::expect(document.parseWith(allocator, b"[]", defaults.withMaxDepth(0)).isError()).?;
+    test::expect(document.parseWith(allocator, b"[[]]", defaults.withMaxDepth(2)).isSuccess()).?;
+    test::expect(document.parseWith(allocator, b"[[]]", defaults.withMaxDepth(1)).isError()).?;
+    test::expect(document.parseWith(allocator, b"[0]", defaults.withMaxNodes(2)).isSuccess()).?;
+    test::expect(document.parseWith(allocator, b"0", defaults.withMaxNodes(0)).isError()).?;
+    test::expect(document.parseWith(allocator, b"null", defaults.withMaxInputBytes(4)).isSuccess()).?;
+    test::expect(document.parseWith(allocator, b"123", defaults.withMaxNumberBytes(3)).isSuccess()).?;
+    test::expect(document.parseWith(allocator, b"0", defaults.withMaxNumberBytes(0)).isError()).?;
+    test::expect(document.parseWith(allocator, b"\"\"", defaults.withMaxStringBytes(0)).isSuccess()).?;
+    test::expect(document.parseWith(allocator, b"\"\\u0061\"", defaults.withMaxStringBytes(1)).isSuccess()).?;
+    test::expect(document.parseWith(allocator, b"\"\\uD834\\uDD1E\"", defaults.withMaxStringBytes(4)).isSuccess()).?;
+    test::expect(document.parseWith(allocator, b"\"\\uD834\\uDD1E\"", defaults.withMaxStringBytes(3)).isError()).?;
+    test::expect(document.parseWith(allocator, b"{\"ab\":0}", defaults.withMaxStringBytes(1)).isError()).?;
+    !()
+}
+
+fun roundsFloatsExplicitly() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let inputs: [&[u8]; 5] = [b"-0", b"0.1", b"9007199254740993", b"5e-324", b"-1e-9999"];
+    let bits: [u64; 5] = [0x8000000000000000, 0x3fb999999999999a, 0x4340000000000000, 1, 0x8000000000000000];
+    for i in 0..inputs.len() {
+        test::expect(document.parse(allocator, inputs[i]).isSuccess()).?;
+        let number = test::expectSome(test::expectSome(document.value()).?.asNumber()).?;
+        let value = number.toF64().?;
+        test::expectEqual(value.toBits(), bits[i]).?;
+        test::expect(number.raw().equals(inputs[i])).?;
+    }
+    test::expect(document.parse(allocator, b"1e9999").isSuccess()).?;
+    let number = test::expectSome(test::expectSome(document.value()).?.asNumber()).?;
+    test::expect(number.toF64().isError()).?;
+    test::expect(document.parse(allocator, b"16777217").isSuccess()).?;
+    let number = test::expectSome(test::expectSome(document.value()).?.asNumber()).?;
+    let value = number.toF32().?;
+    test::expectEqual(value.toBits(), 0x4b800000u32).?;
+    !()
+}
+
+fun writesSubtreesAndPropagatesErrors() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    test::expect(document.parse(allocator, b"{\"x\":[1,{\"a\":true}],\"tail\":2}").isSuccess()).?;
+    let top = test::expectSome(document.value()).?;
+    let subtree = test::expectSome(test::expectSome(top.asObject()).?.get(b"x")).?;
+    let mut bytes: [u8; 64] = [0; 64];
+    let mut output = io::FixedBufferWriter::init(bytes);
+    test::expect(subtree.writeTo(&mut output, json::WriteOptions::compact()).isSuccess()).?;
+    test::expect(output.written().equals(b"[1,{\"a\":true}]")).?;
+    let mut shortBytes: [u8; 3] = [0; 3];
+    let mut shortOutput = io::FixedBufferWriter::init(shortBytes);
+    test::expect(match subtree.writeTo(&mut shortOutput, json::WriteOptions::compact()) {
+        io::BufferError::NoSpace! => true, _ => false,
+    }).?;
+    // Keys count as values: the object, three keys, the array, and four more.
+    test::expectEqual(document.nodeCount(), 9).?;
+    !()
+}
+
+fun parsesDeepDocumentsIteratively() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = allocator.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(allocator); };
+    let mut input: [u8; 65] = [0; 65];
+    for i in 0..32 { input[i] = b'['; input[33 + i] = b']'; }
+    input[32] = b'0';
+    test::expect(document.parse(allocator, input).isSuccess()).?;
+    test::expectEqual(document.nodeCount(), 33).?;
+    let mut outputBytes: [u8; 65] = [0; 65];
+    let mut output = io::FixedBufferWriter::init(outputBytes);
+    let top = test::expectSome(document.value()).?;
+    test::expect(top.writeTo(&mut output, json::WriteOptions::compact()).isSuccess()).?;
+    test::expect(output.written().equals(input)).?;
+    !()
+}
+
+// Nesting on either side of the parser's inline frames, and moving them to
+// the document mid-parse, gives the same document; an allocation failure at
+// any point of a deep parse leaves the document owning nothing.
+fun spillsFramesAtAnyDepth() test::Error!() {
+    let mut page: mem::PageAllocator = .init();
+    let mut backing: mem::GeneralPurposeAllocator = .init(page);
+    defer { _ = backing.deinitWithoutLeakCheck(); };
+    let mut document = json::Document::init();
+    defer { _ = document.deinit(backing); };
+    let mut input: [u8; 161] = [0; 161];
+    let mut output: [u8; 161] = [0; 161];
+    for depth in 0usize..80 {
+        // `depth` arrays around a member of a `depth`-deep object chain.
+        for i in 0..depth { input[i] = b'['; input[depth + 1 + i] = b']'; }
+        input[depth] = b'7';
+        let text = &input[0..(2 * depth + 1)];
+        test::expect(document.parse(backing, text).isSuccess()).?;
+        test::expectEqual(document.nodeCount(), depth + 1).?;
+        let mut writer = io::FixedBufferWriter::init(output);
+        let top = test::expectSome(document.value()).?;
+        test::expect(top.writeTo(&mut writer, json::WriteOptions::compact()).isSuccess()).?;
+        test::expect(writer.written().equals(text)).?;
+    }
+    let deep = &input[0..(2 * 79 + 1)];
+    let mut completed = false;
+    for failAt in 0usize..16usize {
+        let mut allocator = test::FailingAllocator::init(backing);
+        allocator.failAllocationAfter(failAt);
+        let mut fresh = json::Document::init();
+        if fresh.parse(&mut allocator, deep) is error! {
+            test::expect(fresh.value().isNull()).?;
+        } else {
+            completed = true;
+        }
+        allocator.clearFailures();
+        test::expect(fresh.deinit(&mut allocator).isSuccess()).?;
+        test::expectEqual(allocator.activeBlocks(), 0).?;
+        if completed { break; }
+    }
+    test::expect(completed)
+}
+
+pub fun main(init: process::Init) process::ExitCode!() {
+    _ = init;
+    let cases: [test::Case; 8] = [
+        .init("allocation failures retain ownership", allocationFailuresRetainOwnership),
+        .init("failed cleanup is retryable", failedCleanupIsRetryable),
+        .init("capacity reuse and input ownership", reusesCapacityAndOwnsInput),
+        .init("exact resource boundaries", exactResourceBoundaries),
+        .init("explicit correctly rounded floats", roundsFloatsExplicitly),
+        .init("subtree writing and writer failures", writesSubtreesAndPropagatesErrors),
+        .init("iterative deep document", parsesDeepDocumentsIteratively),
+        .init("frames spilled at any depth", spillsFramesAtAnyDepth),
+    ];
+    let summary = test::Runner::init(cases).runWith(&mut \result -> {
+        if result.error() is ?cause { _ = io::debugPrint("{}: {}\n", [result.name(), cause]); }
+    });
+    if not summary.isSuccessful() { return process::ExitCode(1)!; }
+    !()
+}

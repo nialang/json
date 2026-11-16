@@ -1,0 +1,674 @@
+// Lexical scanning shared by every reader of JSON text.
+//
+// Each function scans from a byte index and returns the index after what it
+// recognized, so callers keep their position in a local. Strings are decoded
+// in place: decoded bytes start where the source bytes start and are never
+// longer, so writing never overtakes reading.
+
+using std::builtin;
+using root::error::Code;
+using root::tape;
+
+// Why scanning stopped, and where.
+pub(root) struct Failure {
+    code: Code,
+    offset: usize,
+}
+
+extend Failure {
+    pub(root) fun code(&self) Code {
+        self.code
+    }
+
+    pub(root) fun offset(&self) usize {
+        self.offset
+    }
+}
+
+fun fail(code: Code, offset: usize) Failure {
+    .{ code, offset }
+}
+
+// RFC 8259 whitespace: space, tab, line feed, carriage return.
+@[inlineAlways]
+pub(root) fun isWhitespace(byte: u8) bool {
+    byte == b' ' or byte == b'\n' or byte == b'\r' or byte == b'\t'
+}
+
+// The first byte after the whitespace run that starts at `from`.
+//
+// Runs are read with branches rather than by classifying a block: a
+// correctly predicted branch lets the processor run ahead to the next
+// token, while a position computed from a vector mask makes it wait for
+// the mask. Indentation, the long runs of pretty-printed text, is stepped
+// over two spaces at a time; at a given depth it repeats, so the loop's
+// exit is predicted too.
+pub(root) fun skipWhitespace(bytes: &[u8], from: usize) usize {
+    let mut index = from;
+    while index < bytes.len() and isWhitespace(bytes[index]) {
+        index += 1;
+        while bytes.len() - index >= 2 and builtin::loadUnaligned[u16](&bytes[index]) == twoSpaces {
+            index += 2;
+        }
+    }
+    index
+}
+
+// Two spaces read as one sixteen-bit word, in either byte order.
+const twoSpaces: u16 = 0x2020;
+
+// A token read by a fast path: its length and the position just past it.
+// Both are computed where the token was scanned, which bounds them, so a
+// caller does no arithmetic of its own on them.
+pub(root) struct Short {
+    len: usize,
+    next: usize,
+}
+
+extend Short {
+    // Not short: the caller then uses `decodeString` or `scanNumber`, which
+    // also report any error.
+    @[inlineAlways]
+    pub(root) fun none() Short {
+        .{ len: notShort, next: 0 }
+    }
+
+    @[inlineAlways]
+    pub(root) fun isShort(self) bool {
+        self.len != notShort
+    }
+
+    pub(root) fun len(self) usize {
+        self.len
+    }
+
+    pub(root) fun next(self) usize {
+        self.next
+    }
+}
+
+const notShort: usize = usize::MAX;
+
+// The string whose opening quote is at `quote`, when it needs no decoding and
+// no further scanning: plain ASCII that closes within the sixteen bytes after
+// the quote, at most `limit` bytes long. Its length excludes the quotes.
+// One vector check is used, unlike `shortInteger`, so that a long string
+// gives up after a single load.
+@[inlineAlways]
+pub(root) fun shortString(image: &[u8], quote: usize, limit: usize) Short {
+    // The quote and the sixteen bytes after it, read through a window whose
+    // length the compiler knows, so that offsets in it need no checks.
+    let rest = &image[quote..];
+    if rest.len() < 17 {
+        return Short::none();
+    }
+    let window = &rest[0..17];
+    let chunk = builtin::loadUnaligned[u8x16](&window[1]);
+    let stop = builtin::bitmask(
+        (chunk < builtin::splat[u8x16](0x20))
+            | (chunk == builtin::splat[u8x16](b'"'))
+            | (chunk == builtin::splat[u8x16](b'\\'))
+            | (chunk >= builtin::splat[u8x16](0x80)),
+    );
+    if stop == 0 {
+        return Short::none();
+    }
+    // A sixteen-lane mask has its lowest set bit below 16, so the closing
+    // quote, at `len + 1`, is within the window.
+    let len = (builtin::ctz[u16](stop) as usize) & 15;
+    if window[len + 1] != b'"' or len > limit {
+        return Short::none();
+    }
+    .{ len, next: quote + len + 2 }
+}
+
+// The end of a string and its decoded length.
+pub(root) struct DecodedString {
+    next: usize,
+    len: usize,
+}
+
+extend DecodedString {
+    pub(root) fun next(&self) usize {
+        self.next
+    }
+
+    pub(root) fun len(&self) usize {
+        self.len
+    }
+
+    // Whether the source spelled the string with escapes. Every escape
+    // decodes to fewer bytes than it spells, so the decoded string is shorter
+    // than its source exactly when it had one.
+    pub(root) fun hadEscapes(&self, quote: usize) bool {
+        self.next - quote - 2 != self.len
+    }
+}
+
+// Decodes the string whose opening quote is at `quote`, in place, and checks
+// that the decoded form is at most `limit` bytes. It rejects control
+// characters, malformed UTF-8, invalid escapes, and unpaired surrogates.
+pub(root) fun decodeString(image: &mut [u8], quote: usize, limit: usize) Failure!DecodedString {
+    let start = quote + 1;
+    let mut read = start;
+    let mut write = start;
+    loop {
+        // Plain bytes and well-formed UTF-8 move sixteen at a time. A chunk
+        // ends before a quote, backslash, or control character, and before a
+        // sequence it does not hold whole, so every chunk starts a sequence.
+        // A chunk with malformed UTF-8 is left to the byte-wise path below,
+        // which reports it. Every load stays inside the image, so the input
+        // needs no padding.
+        while image.len() - read >= 16 {
+            let chunk = builtin::loadUnaligned[u8x16](&image[read]);
+            let specialLanes = (chunk < builtin::splat[u8x16](0x20))
+                | (chunk == builtin::splat[u8x16](b'"'))
+                | (chunk == builtin::splat[u8x16](b'\\'));
+            let highLanes = chunk >= builtin::splat[u8x16](0x80);
+            if builtin::bitmask(specialLanes | highLanes) == 0 {
+                // Sixteen plain ASCII bytes, the common case.
+                if write != read {
+                    copyChunk(image, write, read, 16);
+                }
+                read += 16;
+                write += 16;
+                continue;
+            }
+            let special = builtin::bitmask(specialLanes);
+            let mut count = if special == 0 { 16usize } else { builtin::ctz[u16](special) as usize };
+            if builtin::bitmask(highLanes) != 0 {
+                // The check reads the three bytes before the chunk.
+                if read < 3 or (utf8ChunkErrors(image, read, chunk) as usize & ((2usize << count) - 1)) != 0 {
+                    break;
+                }
+                if special == 0 {
+                    // A sequence that starts in the last three lanes and does
+                    // not end in the chunk is left for the next one. The chunk
+                    // is valid, so at most one such lead exists.
+                    let tail = loadWordLowFirst(image, read + 12);
+                    if ((tail >> 8) & 0xff) >= 0xf0 {
+                        count = 13;
+                    } else if ((tail >> 16) & 0xff) >= 0xe0 {
+                        count = 14;
+                    } else if (tail >> 24) >= 0xc0 {
+                        count = 15;
+                    }
+                }
+            }
+            if write != read and count != 0 {
+                copyChunk(image, write, read, count);
+            }
+            read += count;
+            write += count;
+            if special != 0 {
+                break;
+            }
+        }
+        if read == image.len() {
+            return fail(.UnexpectedEnd, read)!;
+        }
+        let byte = image[read];
+        if byte == b'"' {
+            let len = write - start;
+            if len > limit {
+                return fail(.StringLimit, quote)!;
+            }
+            return !.{ next: read + 1, len };
+        }
+        if byte == b'\\' {
+            // Escapes tend to come in runs; a run is decoded here, without a
+            // pass through the vector loop between its escapes.
+            loop {
+                let simple = if read + 1 < image.len() { simpleEscape(image[read + 1]) } else { 0 };
+                if simple != 0 {
+                    image[write] = simple;
+                    read += 2;
+                    write += 1;
+                } else {
+                    let decoded = decodeEscape(image, read, write).?;
+                    read = decoded.read;
+                    write = decoded.write;
+                }
+                if read == image.len() or image[read] != b'\\' {
+                    break;
+                }
+            }
+        } else if byte < 0x20 {
+            return fail(.ControlCharacter, read)!;
+        } else if byte < 0x80 {
+            image[write] = byte;
+            read += 1;
+            write += 1;
+        } else {
+            // A run of multi-byte sequences is consumed here rather than one
+            // sequence per pass through the vector loop. While four bytes
+            // remain, each sequence is read and checked as one word.
+            loop {
+                if image.len() - read < 4 {
+                    while read < image.len() and image[read] >= 0x80 {
+                        let width = utf8SequenceWidth(image, read).?;
+                        if write != read {
+                            _ = (&mut image[write..(write + width)]).copyFrom(&image[read..(read + width)]);
+                        }
+                        read += width;
+                        write += width;
+                    }
+                    break;
+                }
+                let word = loadWordLowFirst(image, read);
+                if (word & 0x80) == 0 {
+                    break;
+                }
+                let width = utf8WordWidth(word);
+                if width == 0 {
+                    return fail(.InvalidUtf8, read)!;
+                }
+                if write != read {
+                    image[write] = word as u8;
+                    image[write + 1] = (word >> 8) as u8;
+                    if width > 2 {
+                        image[write + 2] = (word >> 16) as u8;
+                    }
+                    if width > 3 {
+                        image[write + 3] = (word >> 24) as u8;
+                    }
+                }
+                read += width;
+                write += width;
+            }
+        }
+    }
+}
+
+// Moves `count` bytes, at most sixteen, from `read` down to `write` within
+// the sixteen bytes at `read`. When the gap is at least sixteen, a whole
+// chunk is moved as one sixteen-byte value: bytes past `count` land only on
+// bytes already read and are overwritten by later output.
+@[inlineAlways]
+fun copyChunk(image: &mut [u8], write: usize, read: usize, count: usize) () {
+    if read - write >= 16 {
+        let bytes = builtin::loadUnaligned[[u8; 16]](&image[read]);
+        (&mut image[write] as &mut [u8; 16]).* = bytes;
+    } else {
+        builtin::memmove(&mut image[write..(write + count)], &image[read..(read + count)]);
+    }
+}
+
+// Lanes `first` to 15 of a sixteen-lane mask.
+const fun lanesFrom(first: usize) boolx16 {
+    let mut lanes = builtin::splat[boolx16](false);
+    let mut lane = first;
+    while lane < 16 {
+        lanes = builtin::insert(lanes, lane, true);
+        lane += 1;
+    }
+    lanes
+}
+
+const fromLane1: boolx16 = lanesFrom(1);
+const fromLane2: boolx16 = lanesFrom(2);
+const fromLane3: boolx16 = lanesFrom(3);
+
+// The lanes of `chunk`, the sixteen bytes at `at`, that make it malformed
+// UTF-8 (RFC 3629), as a mask with lane 0 lowest. `at` starts a sequence and
+// is at least 3. A byte must be a continuation byte exactly when a lead byte
+// one, two, or three lanes before it reaches it; lanes before `at` reach
+// nothing, because `at` starts a sequence.
+fun utf8ChunkErrors(image: &[u8], at: usize, chunk: u8x16) u16 {
+    let prev1 = builtin::loadUnaligned[u8x16](&image[at - 1]);
+    let prev2 = builtin::loadUnaligned[u8x16](&image[at - 2]);
+    let prev3 = builtin::loadUnaligned[u8x16](&image[at - 3]);
+    let required = ((prev1 >= builtin::splat[u8x16](0xc0)) & fromLane1)
+        | ((prev2 >= builtin::splat[u8x16](0xe0)) & fromLane2)
+        | ((prev3 >= builtin::splat[u8x16](0xf0)) & fromLane3);
+    let continuation = (chunk >= builtin::splat[u8x16](0x80)) & (chunk < builtin::splat[u8x16](0xc0));
+    let invalid = (chunk == builtin::splat[u8x16](0xc0))
+        | (chunk == builtin::splat[u8x16](0xc1))
+        | (chunk >= builtin::splat[u8x16](0xf5));
+    // Second bytes with a narrower range rule out overlong three- and
+    // four-byte forms, surrogates, and values past U+10FFFF.
+    let narrow = (((prev1 == builtin::splat[u8x16](0xe0)) & (chunk < builtin::splat[u8x16](0xa0)))
+        | ((prev1 == builtin::splat[u8x16](0xed)) & (chunk >= builtin::splat[u8x16](0xa0)))
+        | ((prev1 == builtin::splat[u8x16](0xf0)) & (chunk < builtin::splat[u8x16](0x90)))
+        | ((prev1 == builtin::splat[u8x16](0xf4)) & (chunk >= builtin::splat[u8x16](0x90))))
+        & fromLane1;
+    builtin::bitmask((required ^ continuation) | invalid | narrow)
+}
+
+// The byte a two-character escape stands for, or zero when `byte` does not
+// complete one.
+@[inlineAlways]
+fun simpleEscape(byte: u8) u8 {
+    match byte {
+        b'"' => b'"',
+        b'\\' => b'\\',
+        b'/' => b'/',
+        b'b' => 0x08,
+        b'f' => 0x0c,
+        b'n' => b'\n',
+        b'r' => b'\r',
+        b't' => b'\t',
+        _ => 0,
+    }
+}
+
+// The four bytes at `at` as a word holding the first byte in its low eight
+// bits. The caller guarantees four bytes remain.
+@[if endian == "little"]
+@[inlineAlways]
+fun loadWordLowFirst(bytes: &[u8], at: usize) u32 {
+    builtin::loadUnaligned[u32](&bytes[at])
+}
+
+@[if endian == "big"]
+@[inlineAlways]
+fun loadWordLowFirst(bytes: &[u8], at: usize) u32 {
+    bytes[at] as u32
+        | (bytes[at + 1] as u32) << 8
+        | (bytes[at + 2] as u32) << 16
+        | (bytes[at + 3] as u32) << 24
+}
+
+// The width of the well-formed UTF-8 sequence at the start of `word`, whose
+// bytes are in memory order from its low end, or zero when it is malformed
+// (RFC 3629). The masks check lead and continuation bits together; the
+// remaining tests reject overlong forms, surrogates, and values past
+// U+10FFFF.
+fun utf8WordWidth(word: u32) usize {
+    if (word & 0xc0e0) == 0x80c0 {
+        if (word & 0x1e) != 0 { 2 } else { 0 }
+    } else if (word & 0xc0c0f0) == 0x8080e0 {
+        // The lead's low nibble with the second byte's 0x20 bit: zero is
+        // overlong, 0x200d (0xed 0xa0..) a surrogate.
+        let bits = word & 0x200f;
+        if bits != 0 and bits != 0x200d { 3 } else { 0 }
+    } else if (word & 0xc0c0c0f8) == 0x808080f0 {
+        let plane = ((word & 0x07) << 2) | ((word >> 12) & 0x03);
+        if plane >= 1 and plane <= 16 { 4 } else { 0 }
+    } else {
+        0
+    }
+}
+
+struct Cursor {
+    read: usize,
+    write: usize,
+}
+
+// Decodes the escape whose backslash is at `read` into `image[write..]`.
+fun decodeEscape(image: &mut [u8], read: usize, write: usize) Failure!Cursor {
+    if read + 1 == image.len() {
+        return fail(.UnexpectedEnd, read + 1)!;
+    }
+    if image[read + 1] != b'u' {
+        let simple = simpleEscape(image[read + 1]);
+        if simple == 0 {
+            return fail(.InvalidEscape, read + 1)!;
+        }
+        image[write] = simple;
+        return !.{ read: read + 2, write: write + 1 };
+    }
+    let first = hex4(image, read + 2).?;
+    let mut next = read + 6;
+    let scalar = if first >= 0xd800 and first <= 0xdbff {
+        // A high surrogate must be followed by an escaped low surrogate.
+        if next + 1 >= image.len() or image[next] != b'\\' or image[next + 1] != b'u' {
+            return fail(.UnpairedSurrogate, next)!;
+        }
+        let second = hex4(image, next + 2).?;
+        if second < 0xdc00 or second > 0xdfff {
+            return fail(.UnpairedSurrogate, next)!;
+        }
+        next += 6;
+        0x10000 + ((first - 0xd800) << 10) + (second - 0xdc00)
+    } else if first >= 0xdc00 and first <= 0xdfff {
+        return fail(.UnpairedSurrogate, read)!;
+    } else {
+        first
+    };
+    !.{ read: next, write: write + encodeUtf8(image, write, scalar) }
+}
+
+fun hex4(image: &[u8], start: usize) Failure!u32 {
+    if image.len() - start < 4 {
+        return fail(.InvalidUnicodeEscape, start)!;
+    }
+    let mut value: u32 = 0;
+    for index in start..(start + 4) {
+        let byte = image[index];
+        let digit: u32 = if byte >= b'0' and byte <= b'9' {
+            (byte - b'0') as u32
+        } else if byte >= b'a' and byte <= b'f' {
+            (byte - b'a') as u32 + 10
+        } else if byte >= b'A' and byte <= b'F' {
+            (byte - b'A') as u32 + 10
+        } else {
+            return fail(.InvalidUnicodeEscape, index)!;
+        };
+        value = (value << 4) | digit;
+    }
+    !value
+}
+
+// Writes the UTF-8 form of a Unicode scalar value and returns its width.
+fun encodeUtf8(image: &mut [u8], at: usize, scalar: u32) usize {
+    if scalar < 0x80 {
+        image[at] = scalar as u8;
+        1
+    } else if scalar < 0x800 {
+        image[at] = (0xc0 | (scalar >> 6)) as u8;
+        image[at + 1] = (0x80 | (scalar & 0x3f)) as u8;
+        2
+    } else if scalar < 0x10000 {
+        image[at] = (0xe0 | (scalar >> 12)) as u8;
+        image[at + 1] = (0x80 | ((scalar >> 6) & 0x3f)) as u8;
+        image[at + 2] = (0x80 | (scalar & 0x3f)) as u8;
+        3
+    } else {
+        image[at] = (0xf0 | (scalar >> 18)) as u8;
+        image[at + 1] = (0x80 | ((scalar >> 12) & 0x3f)) as u8;
+        image[at + 2] = (0x80 | ((scalar >> 6) & 0x3f)) as u8;
+        image[at + 3] = (0x80 | (scalar & 0x3f)) as u8;
+        4
+    }
+}
+
+// The width of the well-formed UTF-8 sequence at `at`, which starts with a
+// byte of at least 0x80. Overlong forms, surrogates, and values past
+// U+10FFFF are malformed (RFC 3629).
+fun utf8SequenceWidth(bytes: &[u8], at: usize) Failure!usize {
+    let lead = bytes[at];
+    let (width, low, high): (usize, u8, u8) = if lead >= 0xc2 and lead <= 0xdf {
+        (2, 0x80, 0xbf)
+    } else if lead == 0xe0 {
+        (3, 0xa0, 0xbf)
+    } else if lead == 0xed {
+        (3, 0x80, 0x9f)
+    } else if lead >= 0xe1 and lead <= 0xef {
+        (3, 0x80, 0xbf)
+    } else if lead == 0xf0 {
+        (4, 0x90, 0xbf)
+    } else if lead == 0xf4 {
+        (4, 0x80, 0x8f)
+    } else if lead >= 0xf1 and lead <= 0xf3 {
+        (4, 0x80, 0xbf)
+    } else {
+        return fail(.InvalidUtf8, at)!;
+    };
+    if bytes.len() - at < width {
+        return fail(.InvalidUtf8, at)!;
+    }
+    let second = bytes[at + 1];
+    if second < low or second > high {
+        return fail(.InvalidUtf8, at)!;
+    }
+    for index in (at + 2)..(at + width) {
+        if (bytes[index] & 0xc0) != 0x80 {
+            return fail(.InvalidUtf8, at)!;
+        }
+    }
+    !width
+}
+
+// The number that starts at `start` when it is a short integer: an
+// optional minus and digits without a leading zero, ending within the sixteen
+// bytes at `start` at a byte that cannot continue a number, and at most
+// `limit` bytes long; its length includes the sign.
+@[inlineAlways]
+pub(root) fun shortInteger(bytes: &[u8], start: usize, limit: usize) Short {
+    if bytes.len() - start < 16 {
+        return Short::none();
+    }
+    // The sixteen bytes at `start`, read through a window whose length the
+    // compiler knows, so that offsets below sixteen need no bounds checks.
+    // The digits end at the first byte that is not one, past a leading minus
+    // sign. A single digit, the most common short number, is told with two
+    // compares and no scan, so its end is known without waiting on the
+    // vector.
+    let window = &bytes[start..(start + 16)];
+    let negative = window[0] == b'-';
+    let first: usize = if negative { 1 } else { 0 };
+    let end = if isDigit(window[first]) and not isDigit(window[first + 1]) {
+        first + 1
+    } else {
+        let chunk = builtin::loadUnaligned[u8x16](&window[0]);
+        let nondigits = builtin::bitmask(
+            (chunk < builtin::splat[u8x16](b'0')) | (chunk > builtin::splat[u8x16](b'9')),
+        );
+        let stops = if negative { nondigits & ~1u16 } else { nondigits };
+        if stops == 0 {
+            return Short::none();
+        }
+        builtin::ctz[u16](stops) as usize
+    };
+    // `end` is an offset in the window, below sixteen.
+    if end == first or (end - first > 1 and window[first] == b'0') {
+        return Short::none();
+    }
+    let next = window[end & 15];
+    if next == b'.' or next == b'e' or next == b'E' or end > limit {
+        return Short::none();
+    }
+    .{ len: end, next: start + end }
+}
+
+// The end of a number and what kind of number it is.
+pub(root) struct ScannedNumber {
+    next: usize,
+    flags: u8,
+}
+
+extend ScannedNumber {
+    pub(root) fun next(&self) usize {
+        self.next
+    }
+
+    pub(root) fun flags(&self) u8 {
+        self.flags
+    }
+}
+
+@[inlineAlways]
+fun isDigit(byte: u8) bool {
+    byte >= b'0' and byte <= b'9'
+}
+
+fun skipDigits(bytes: &[u8], from: usize) usize {
+    let mut index = from;
+    // Sixteen bytes at a time; a byte that is not a digit lies below `'0'` or
+    // above `'9'`.
+    while bytes.len() - index >= 16 {
+        let chunk = builtin::loadUnaligned[u8x16](&bytes[index]);
+        let nondigit = (chunk < builtin::splat[u8x16](b'0'))
+            | (chunk > builtin::splat[u8x16](b'9'));
+        let mask = builtin::bitmask(nondigit);
+        if mask == 0 {
+            index += 16;
+        } else {
+            return index + builtin::ctz[u16](mask) as usize;
+        }
+    }
+    while index < bytes.len() and isDigit(bytes[index]) {
+        index += 1;
+    }
+    index
+}
+
+// Scans the RFC 8259 number that starts at `start` and checks that its lexeme
+// is at most `limit` bytes.
+pub(root) fun scanNumber(bytes: &[u8], start: usize, limit: usize) Failure!ScannedNumber {
+    let mut index = start;
+    let mut flags = tape::integerFlag;
+    if bytes[index] == b'-' {
+        flags |= tape::negativeFlag;
+        index += 1;
+    }
+    if index == bytes.len() or not isDigit(bytes[index]) {
+        return fail(.InvalidNumber, index)!;
+    }
+    if bytes[index] == b'0' {
+        index += 1;
+        if index < bytes.len() and isDigit(bytes[index]) {
+            return fail(.InvalidNumber, index)!;
+        }
+    } else {
+        index = skipDigits(bytes, index + 1);
+    }
+    if index < bytes.len() and bytes[index] == b'.' {
+        flags &= ~tape::integerFlag;
+        let fraction = index + 1;
+        index = skipDigits(bytes, fraction);
+        if index == fraction {
+            return fail(.InvalidNumber, index)!;
+        }
+    }
+    if index < bytes.len() and (bytes[index] == b'e' or bytes[index] == b'E') {
+        flags &= ~tape::integerFlag;
+        index += 1;
+        if index < bytes.len() and (bytes[index] == b'+' or bytes[index] == b'-') {
+            index += 1;
+        }
+        let exponent = index;
+        index = skipDigits(bytes, exponent);
+        if index == exponent {
+            return fail(.InvalidNumber, index)!;
+        }
+    }
+    if index - start > limit {
+        return fail(.NumberLimit, start + limit)!;
+    }
+    !.{ next: index, flags }
+}
+
+// Checks that `bytes[at..]` starts with `literal`, whose first byte the
+// caller has already matched.
+pub(root) fun expectLiteral(bytes: &[u8], at: usize, literal: &[u8]) Failure!usize {
+    let end = at + literal.len();
+    if bytes.len() < end {
+        return fail(.UnexpectedEnd, bytes.len())!;
+    }
+    // `true` and `null`, and the first four bytes of `false`, are compared as
+    // one word.
+    if literal.len() >= 4 {
+        let got = builtin::loadUnaligned[u32](&bytes[at]);
+        let want = builtin::loadUnaligned[u32](&literal[0]);
+        if got != want {
+            return fail(.UnexpectedToken, at)!;
+        }
+        if literal.len() == 4 {
+            return !(at + 4);
+        }
+        for offset in 4..literal.len() {
+            if bytes[at + offset] != literal[offset] {
+                return fail(.UnexpectedToken, at + offset)!;
+            }
+        }
+        return !(at + literal.len());
+    }
+    for offset in 1..literal.len() {
+        if bytes[at + offset] != literal[offset] {
+            return fail(.UnexpectedToken, at + offset)!;
+        }
+    }
+    !(at + literal.len())
+}

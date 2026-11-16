@@ -1,0 +1,45 @@
+// The parser as a process, for the conformance and differential tools:
+// reads a document from standard input and writes it back compactly. Exit
+// status 0 means the text is JSON, 1 that it is not, with the diagnostic on
+// standard error, and 2 any other failure.
+using std::io;
+using std::mem;
+using std::process;
+using json;
+
+pub fun main(init: process::Init) process::ExitCode!() {
+    _ = init;
+    let mut page: mem::PageAllocator = .init();
+    let mut allocator: mem::GeneralPurposeAllocator = .init(page);
+    defer allocator.deinit().?;
+    let mut input: std::ArrayList[u8] = .init();
+    defer input.deinit(allocator).?;
+    let mut readBuffer: [u8; 4096] = [0; 4096];
+    let mut reader = io::FileReader::stdin(readBuffer);
+    if io::readToEnd(&mut reader, allocator, json::Options::init().maxInputBytes(), &mut input) is error! {
+        return process::ExitCode(2)!;
+    }
+    let mut document = json::Document::init();
+    defer document.deinit(allocator).?;
+    match document.parse(allocator, input.asSlice()) {
+        !() => (),
+        json::Error::Syntax(diagnostic)! => {
+            io::debugPrint("syntax code={} offset={} line={} column={}\n", [
+                diagnostic.code() as i32, diagnostic.offset(), diagnostic.line(), diagnostic.column(),
+            ]).?;
+            return process::ExitCode(1)!;
+        },
+        _! => return process::ExitCode(2)!,
+    }
+    let value = match document.value() {
+        ?value => value,
+        null => return process::ExitCode(2)!,
+    };
+    let mut writeBuffer: [u8; 4096] = [0; 4096];
+    let mut output = io::FileWriter::stdout(writeBuffer);
+    if value.writeTo(&mut output, json::WriteOptions::compact()) is error! {
+        return process::ExitCode(2)!;
+    }
+    if output.flush() is error! { return process::ExitCode(2)!; }
+    !()
+}

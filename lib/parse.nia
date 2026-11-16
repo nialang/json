@@ -1,0 +1,492 @@
+// Parses JSON text into a document's tape.
+//
+// One loop parses the whole document, keeping the read position, value count,
+// and innermost open container in locals. Enclosing containers are kept on an
+// explicit frame stack, so nesting never uses the native stack.
+
+using std::builtin;
+using std::mem;
+using std::result;
+using std::slice;
+using root::document::{Document, Options};
+using root::error::{Code, Diagnostic, Error};
+using root::lexical;
+using root::tape;
+using root::tape::{Kind, Node};
+
+// Parses `input` into `document`; see `Document::parseWith`.
+pub(root) fun parseDocument(
+    document: &mut Document,
+    allocator: &mut mem::Allocator,
+    input: &[u8],
+    options: Options,
+) Error!() {
+    if not document.canParse() {
+        return Error::InvalidState!;
+    }
+    document.clear();
+    // Offsets and counts in the tape are 32 bits wide.
+    if input.len() > options.maxInputBytes() or input.len() > u32::MAX as usize {
+        return Error::Syntax(Diagnostic::at(.InputLimit, input, input.len()))!;
+    }
+    document.image.ensure(allocator, 0, input.len()).mapError(.Allocation).?;
+    _ = document.image.asMutSlice().copyFrom(input);
+    // A short string or integer is under sixteen bytes; under limits that
+    // leave room for those, the fast paths need not check them.
+    let parsed = if options.maxStringBytes() >= 16 and options.maxNumberBytes() >= 16 {
+        parseTape[false](document, allocator, input.len(), options)
+    } else {
+        parseTape[true](document, allocator, input.len(), options)
+    };
+    match parsed {
+        !nodeCount => {
+            document.finishParse(input.len(), nodeCount);
+            !()
+        },
+        failure! => match failure {
+            .Syntax(scan) => Error::Syntax(Diagnostic::at(scan.code(), input, scan.offset()))!,
+            .Allocation(cause) => Error::Allocation(cause)!,
+        },
+    }
+}
+
+enum Failure {
+    Syntax(lexical::Failure),
+    Allocation(mem::Error),
+}
+
+extend lexical::Failure : builtin::IntoError[Failure] {
+    fun intoError(self) Failure {
+        .Syntax(self)
+    }
+}
+
+extend mem::Error : builtin::IntoError[Failure] {
+    fun intoError(self) Failure {
+        .Allocation(self)
+    }
+}
+
+fun syntax(code: Code, offset: usize) Failure {
+    .Syntax(.{ code, offset })
+}
+
+// Nesting levels whose frames fit in the parser's own stack frame.
+const inlineDepth: usize = 32;
+
+// A container that encloses the innermost open one: its tape index and how
+// many children it had when its child opened.
+pub(root) struct Frame {
+    container: u32,
+    children: u32,
+}
+
+// Fills the tape from the image and returns how many nodes it holds.
+//
+// The innermost open container lives in locals: its tape index, whether it is
+// an array, and how many children it has so far. Opening a container saves the
+// enclosing one's index and child count on the frame stack, one frame per
+// level, and closing it restores them; a closed container's count and subtree
+// end are written to the tape once.
+//
+// Each kind of container has its own loop, so an array's elements and an
+// object's members are read without asking which kind is open or what comes
+// next. A loop runs until its container closes or opens a child; the outer
+// loop then switches to the container that is innermost.
+//
+// `ShortLimits` is whether the string or number limit is below sixteen bytes,
+// so that even a short token can exceed it; otherwise the fast paths check no
+// limit, and only the slow paths, which handle the long tokens, do.
+fun parseTape[ShortLimits: bool](
+    document: &mut Document,
+    allocator: &mut mem::Allocator,
+    len: usize,
+    options: Options,
+) Failure!usize {
+    let maxNodes = options.maxNodes();
+    let maxDepth = options.maxDepth();
+    let maxString = options.maxStringBytes();
+    let maxNumber = options.maxNumberBytes();
+    let mut image = &mut document.image.asMutSlice()[0..len];
+    // Each value takes at least two bytes of input except the last, so this
+    // estimate rarely grows.
+    let estimate = if len / 2 + 2 < maxNodes { len / 2 + 2 } else { maxNodes };
+    document.nodes.ensure(allocator, 0, estimate).?;
+    // The tape as far as nodes fit before capacity or the node limit needs a
+    // look, so the check that a node fits also proves its index in bounds.
+    let mut nodes = roomFor(document, maxNodes);
+    // The frame stack starts in this frame and moves to the document's
+    // storage only for documents nested deeper than `inlineDepth`, so most
+    // parses allocate nothing for it.
+    let mut inlineFrames: [Frame; inlineDepth] = [.{ container: 0, children: 0 }; inlineDepth];
+    let mut frames: &mut [Frame] = &mut inlineFrames[..];
+    let mut framesInline = true;
+    let mut count: usize = 0;
+    let mut depth: usize = 0;
+    let mut container: usize = 0;
+    let mut children: usize = 0;
+    let mut inArray = false;
+    // The top-level value.
+    let mut position = skipWhitespace(image, 0);
+    if position >= len {
+        return syntax(.UnexpectedEnd, position)!;
+    }
+    nodes = roomAt(document, allocator, nodes, count, maxNodes, position).?;
+    children += 1;
+    let top = image[position];
+    if top != b'[' and top != b'{' {
+        position = scalar[ShortLimits](image, nodes, count, position, maxString, maxNumber).?;
+        count += 1;
+        position = skipWhitespace(image, position);
+        if position != len {
+            return syntax(.TrailingContent, position)!;
+        }
+        return !count;
+    }
+    // Opening a container: the byte at `position` is its bracket.
+    let mut opening = true;
+    loop {
+        // Whether the next thing is the first member or element: true once a
+        // container opens, false when its parent resumes after it closes.
+        let mut first = opening;
+        if opening {
+            let byte = image[position];
+            if depth == maxDepth {
+                return syntax(.DepthLimit, position)!;
+            }
+            frames = framesAt(document, allocator, frames, depth, &mut framesInline).?;
+            frames[depth] = .{ container: container as u32, children: children as u32 };
+            depth += 1;
+            container = count;
+            children = 0;
+            inArray = byte == b'[';
+            let kind = if inArray { Kind::Array } else { Kind::Object };
+            nodes[count] = .{ kind, flags: 0, len: 0, data: 0 };
+            count += 1;
+            position += 1;
+        }
+        // Whether the loop below stopped at a child's opening bracket rather
+        // than its own container's close.
+        opening = false;
+        // Each byte the grammar expects next is tested first, and whitespace
+        // is skipped only when that byte is not there, so compact text, the
+        // common case, never asks whether a byte is whitespace.
+        if inArray {
+            loop {
+                let mut byte = peek(image, position);
+                if first {
+                    if lexical::isWhitespace(byte) {
+                        position = lexical::skipWhitespace(image, position);
+                        byte = peek(image, position);
+                    }
+                    if byte == b']' {
+                        position += 1;
+                        break;
+                    }
+                    first = false;
+                } else {
+                    if byte != b',' {
+                        position = lexical::skipWhitespace(image, position);
+                        byte = peek(image, position);
+                        if byte == b']' {
+                            position += 1;
+                            break;
+                        }
+                        if byte != b',' {
+                            return syntax(.ExpectedCommaOrEnd, position)!;
+                        }
+                    }
+                    position += 1;
+                    byte = peek(image, position);
+                    if lexical::isWhitespace(byte) {
+                        position = lexical::skipWhitespace(image, position);
+                        byte = peek(image, position);
+                    }
+                }
+                if position >= len {
+                    return syntax(.UnexpectedEnd, position)!;
+                }
+                nodes = roomAt(document, allocator, nodes, count, maxNodes, position).?;
+                children += 1;
+                if byte == b'[' or byte == b'{' {
+                    opening = true;
+                    break;
+                }
+                position = scalar[ShortLimits](image, nodes, count, position, maxString, maxNumber).?;
+                count += 1;
+            }
+        } else {
+            loop {
+                let mut byte = peek(image, position);
+                if first {
+                    if lexical::isWhitespace(byte) {
+                        position = lexical::skipWhitespace(image, position);
+                        byte = peek(image, position);
+                    }
+                    if byte == b'}' {
+                        position += 1;
+                        break;
+                    }
+                    first = false;
+                } else {
+                    if byte != b',' {
+                        position = lexical::skipWhitespace(image, position);
+                        byte = peek(image, position);
+                        if byte == b'}' {
+                            position += 1;
+                            break;
+                        }
+                        if byte != b',' {
+                            return syntax(.ExpectedCommaOrEnd, position)!;
+                        }
+                    }
+                    position += 1;
+                    byte = peek(image, position);
+                }
+                if byte != b'"' {
+                    position = lexical::skipWhitespace(image, position);
+                    if peek(image, position) != b'"' {
+                        return syntax(.ExpectedKey, position)!;
+                    }
+                }
+                nodes = roomAt(document, allocator, nodes, count, maxNodes, position).?;
+                position = stringNode[ShortLimits](image, nodes, count, position, maxString).?;
+                count += 1;
+                if peek(image, position) != b':' {
+                    position = lexical::skipWhitespace(image, position);
+                    if peek(image, position) != b':' {
+                        return syntax(.ExpectedColon, position)!;
+                    }
+                }
+                position += 1;
+                byte = peek(image, position);
+                if lexical::isWhitespace(byte) {
+                    position = lexical::skipWhitespace(image, position);
+                    byte = peek(image, position);
+                }
+                if position >= len {
+                    return syntax(.UnexpectedEnd, position)!;
+                }
+                nodes = roomAt(document, allocator, nodes, count, maxNodes, position).?;
+                children += 1;
+                if byte == b'[' or byte == b'{' {
+                    opening = true;
+                    break;
+                }
+                position = scalar[ShortLimits](image, nodes, count, position, maxString, maxNumber).?;
+                count += 1;
+            }
+        }
+        if not opening {
+            // The innermost container closed just before `position`.
+            nodes[container].len = children as u32;
+            nodes[container].data = count as u32;
+            depth -= 1;
+            let enclosing = frames[depth];
+            container = enclosing.container as usize;
+            children = enclosing.children as usize;
+            if depth == 0 {
+                position = skipWhitespace(image, position);
+                if position != len {
+                    return syntax(.TrailingContent, position)!;
+                }
+                return !count;
+            }
+            inArray = nodes[container].kind == Kind::Array;
+        }
+    }
+}
+
+// Reads the scalar value at `position` into `nodes[index]` and returns the
+// position just past it.
+@[inlineAlways]
+fun scalar[ShortLimits: bool](
+    image: &mut [u8],
+    nodes: &mut [Node],
+    index: usize,
+    position: usize,
+    maxString: usize,
+    maxNumber: usize,
+) Failure!usize {
+    let byte = image[position];
+    if byte == b'"' {
+        return stringNode[ShortLimits](image, nodes, index, position, maxString);
+    }
+    if byte == b'-' or (byte >= b'0' and byte <= b'9') {
+        let short = lexical::shortInteger(image, position, shortLimit(ShortLimits, maxNumber));
+        let (len, afterNumber, flags): (usize, usize, u8) = if short.isShort() {
+            let sign = if byte == b'-' { tape::negativeFlag } else { 0 };
+            (short.len(), short.next(), tape::integerFlag | sign)
+        } else {
+            let number = lexical::scanNumber(image, position, maxNumber).?;
+            (number.next() - position, number.next(), number.flags())
+        };
+        nodes[index] = .{
+            kind: .Number,
+            flags,
+            len: len as u32,
+            data: position as u32,
+        };
+        return !afterNumber;
+    }
+    if byte == b't' {
+        let next = lexical::expectLiteral(image, position, b"true").?;
+        nodes[index] = .{ kind: .Boolean, flags: 1, len: 0, data: 0 };
+        return !next;
+    }
+    if byte == b'f' {
+        let next = lexical::expectLiteral(image, position, b"false").?;
+        nodes[index] = .{ kind: .Boolean, flags: 0, len: 0, data: 0 };
+        return !next;
+    }
+    if byte == b'n' {
+        let next = lexical::expectLiteral(image, position, b"null").?;
+        nodes[index] = .{ kind: .Null, flags: 0, len: 0, data: 0 };
+        return !next;
+    }
+    syntax(.UnexpectedToken, position)!
+}
+
+// Reads the string or key whose opening quote is at `quote` into
+// `nodes[index]` and returns the position just past it.
+@[inlineAlways]
+fun stringNode[ShortLimits: bool](
+    image: &mut [u8],
+    nodes: &mut [Node],
+    index: usize,
+    quote: usize,
+    maxString: usize,
+) Failure!usize {
+    let short = lexical::shortString(image, quote, shortLimit(ShortLimits, maxString));
+    let (stringLen, after, flags): (usize, usize, u8) = if short.isShort() {
+        (short.len(), short.next(), 0)
+    } else {
+        let string = lexical::decodeString(image, quote, maxString).?;
+        (string.len(), string.next(), escapedFlags(string, quote))
+    };
+    nodes[index] = .{
+        kind: .String,
+        flags,
+        len: stringLen as u32,
+        data: (quote + 1) as u32,
+    };
+    !after
+}
+
+// The limit a short token is checked against: `limit` when one could exceed
+// it, else none. A constant when `ShortLimits` is, so the check folds away.
+@[inlineAlways]
+fun shortLimit(ShortLimits: bool, limit: usize) usize {
+    if ShortLimits { limit } else { usize::MAX }
+}
+
+// The tape's room, in which the node at `count` fits: `nodes` itself in the
+// common case, else grown. The check after growing restates what `growTape`
+// guarantees, which the compiler cannot see through a call it does not
+// inline, so that the write of the node after this needs no bounds check of
+// its own on either path.
+@[inlineAlways]
+fun roomAt(
+    document: &mut Document,
+    allocator: &mut mem::Allocator,
+    nodes: &mut [Node],
+    count: usize,
+    maxNodes: usize,
+    position: usize,
+) Failure!&mut [Node] {
+    if count < nodes.len() {
+        return !nodes;
+    }
+    let grown = growTape(document, allocator, count, maxNodes, position).?;
+    if count >= grown.len() {
+        builtin::trap();
+    }
+    !grown
+}
+
+// Grows the tape so the node at `count` fits, or reports the node limit at
+// `position`, and returns the new room. Rare, so kept out of the parse loop.
+@[inlineNever]
+fun growTape(
+    document: &mut Document,
+    allocator: &mut mem::Allocator,
+    count: usize,
+    maxNodes: usize,
+    position: usize,
+) Failure!&mut [Node] {
+    if count == maxNodes {
+        return syntax(.NodeLimit, position)!;
+    }
+    document.nodes.ensure(allocator, count, count + 1).?;
+    !roomFor(document, maxNodes)
+}
+
+// The frame stack, in which the frame at `depth` fits: `frames` itself in the
+// common case, else grown. The check after growing restates what
+// `growFrames` guarantees, as `roomAt` does for the tape.
+@[inlineAlways]
+fun framesAt(
+    document: &mut Document,
+    allocator: &mut mem::Allocator,
+    frames: &mut [Frame],
+    depth: usize,
+    inline: &mut bool,
+) Failure!&mut [Frame] {
+    if depth < frames.len() {
+        return !frames;
+    }
+    let grown = growFrames(document, allocator, frames, depth, inline).?;
+    if depth >= grown.len() {
+        builtin::trap();
+    }
+    !grown
+}
+
+// Moves the frame stack to the document's storage, or grows it there, so one
+// more frame fits after the `live` in use, and returns it. Only documents
+// nested deeper than `inlineDepth` get here.
+@[inlineNever]
+fun growFrames(
+    document: &mut Document,
+    allocator: &mut mem::Allocator,
+    frames: &[Frame],
+    live: usize,
+    inline: &mut bool,
+) Failure!&mut [Frame] {
+    document.frames.ensure(allocator, if inline.* { 0 } else { live }, live + 1).?;
+    if inline.* {
+        _ = document.frames.asMutSlice().copyFrom(&frames[0..live]);
+        inline.* = false;
+    }
+    !document.frames.asMutSlice()
+}
+
+// The tape's capacity, up to `maxNodes` nodes.
+fun roomFor(document: &mut Document, maxNodes: usize) &mut [Node] {
+    let capacity = document.nodes.asMutSlice();
+    if capacity.len() < maxNodes { capacity } else { &mut capacity[0..maxNodes] }
+}
+
+// The byte at `position`, or 0 at the end of the text. No token starts with
+// a 0 byte, so the end takes the same path as any byte the grammar rejects.
+@[inlineAlways]
+fun peek(image: &[u8], position: usize) u8 {
+    if position < image.len() { image[position] } else { 0 }
+}
+
+// The first byte at or after `position` that is not whitespace. Most calls
+// find none to skip, so that case does not leave the caller.
+@[inlineAlways]
+fun skipWhitespace(image: &[u8], position: usize) usize {
+    if position < image.len() and lexical::isWhitespace(image[position]) {
+        lexical::skipWhitespace(image, position)
+    } else {
+        position
+    }
+}
+
+// The flags of a decoded string node whose opening quote is at `quote`.
+@[inlineAlways]
+fun escapedFlags(string: lexical::DecodedString, quote: usize) u8 {
+    if string.hadEscapes(quote) { tape::escapedFlag } else { 0 }
+}

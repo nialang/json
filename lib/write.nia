@@ -1,0 +1,304 @@
+// Writes values as JSON text.
+
+using std::builtin;
+using std::io;
+using root::tape;
+using root::tape::{Kind, Node};
+using root::value::Value;
+
+pub struct WriteOptions {
+    // Each member and element on its own line, indented.
+    pretty: bool,
+    indent: u8,
+}
+
+extend WriteOptions {
+    // The shortest form: no whitespace.
+    pub fun compact() WriteOptions {
+        .{ pretty: false, indent: 0 }
+    }
+
+    // One member or element per line, indented by `indent` spaces per level.
+    pub fun pretty(indent: u8) WriteOptions {
+        .{ pretty: true, indent }
+    }
+}
+
+// Open containers the writer remembers; deeper ones are found on the tape.
+const inlineDepth: usize = 64;
+
+// Writes `value` to `output`; see `Value::writeTo`.
+pub(root) fun writeValue[W](value: Value, output: &mut W, options: WriteOptions) [W as io::Writer]::Error!()
+where W: io::Writer
+{
+    let mut staged = Staged[W]::init(output);
+    writeTokens(value, &mut staged, options).?;
+    staged.flush()
+}
+
+fun writeTokens[W](value: Value, out: &mut Staged[W], options: WriteOptions) [W as io::Writer]::Error!()
+where W: io::Writer
+{
+    let document = value.document();
+    let nodes = document.nodes();
+    let image = document.image();
+    // The outermost `inlineDepth` open containers, outermost first.
+    let mut open: [usize; inlineDepth] = [0; inlineDepth];
+    let mut depth: usize = 0;
+    let mut index = value.index();
+    loop {
+        if depth != 0 and nodes[enclosing(nodes, open, depth, index)].kind == Kind::Object {
+            writeString(out, nodes[index], image).?;
+            out.byte(b':').?;
+            if options.pretty {
+                out.byte(b' ').?;
+            }
+            index += 1;
+        }
+        let node = nodes[index];
+        match node.kind {
+            .Null => out.bytes(b"null").?,
+            .Boolean => out.bytes(if node.flags != 0 { b"true" } else { b"false" }).?,
+            .Number => out.span(image, node.data as usize, node.len as usize).?,
+            .String => writeString(out, node, image).?,
+            .Array, .Object => {
+                out.byte(if node.kind == Kind::Array { b'[' } else { b'{' }).?;
+                if node.len != 0 {
+                    if depth < inlineDepth {
+                        open[depth] = index;
+                    }
+                    depth += 1;
+                    newline(out, options, depth).?;
+                    index += 1;
+                    continue;
+                }
+                out.byte(if node.kind == Kind::Array { b']' } else { b'}' }).?;
+            },
+        }
+        index = node.subtreeEnd(index);
+        // Close every container that ends here.
+        loop {
+            if depth == 0 {
+                return !();
+            }
+            let container = enclosing(nodes, open, depth, index);
+            if index != nodes[container].data as usize {
+                out.byte(b',').?;
+                newline(out, options, depth).?;
+                break;
+            }
+            depth -= 1;
+            newline(out, options, depth).?;
+            out.byte(if nodes[container].kind == Kind::Array { b']' } else { b'}' }).?;
+        }
+    }
+}
+
+// The innermost open container when `depth` containers are open and `index`
+// is the next node. Past `inlineDepth` it is found by descending from the
+// deepest held container: at each level exactly one child container starts
+// before `index` and ends at or after it.
+@[inlineAlways]
+fun enclosing(nodes: &[Node], open: &[usize], depth: usize, index: usize) usize {
+    if depth <= inlineDepth {
+        open[depth - 1]
+    } else {
+        enclosingDeep(nodes, open, depth, index)
+    }
+}
+
+fun enclosingDeep(nodes: &[Node], open: &[usize], depth: usize, index: usize) usize {
+    let mut container = open[inlineDepth - 1];
+    for _ in inlineDepth..depth {
+        let mut child = container + 1;
+        loop {
+            let node = nodes[child];
+            let end = node.subtreeEnd(child);
+            if node.isContainer() and child < index and index <= end {
+                container = child;
+                break;
+            }
+            child = end;
+        }
+    }
+    container
+}
+
+fun newline[W](out: &mut Staged[W], options: WriteOptions, depth: usize) [W as io::Writer]::Error!()
+where W: io::Writer
+{
+    if options.pretty {
+        out.byte(b'\n').?;
+        for _ in 0..(depth * options.indent as usize) {
+            out.byte(b' ').?;
+        }
+    }
+    !()
+}
+
+// Writes a string or key node. Only one whose source had escapes can hold a
+// byte that needs escaping (see `tape::escapedFlag`); any other is copied.
+@[inlineAlways]
+fun writeString[W](out: &mut Staged[W], node: Node, image: &[u8]) [W as io::Writer]::Error!()
+where W: io::Writer
+{
+    if (node.flags & tape::escapedFlag) == 0 {
+        // The image still holds the source spelling, quotes included.
+        return out.span(image, node.data as usize - 1, node.len as usize + 2);
+    }
+    writeEscaped(out, node.bytes(image))
+}
+
+fun writeEscaped[W](out: &mut Staged[W], bytes: &[u8]) [W as io::Writer]::Error!()
+where W: io::Writer
+{
+    out.byte(b'"').?;
+    let mut index: usize = 0;
+    while index < bytes.len() {
+        if stageBytes - out.len < escapeStep {
+            out.flush().?;
+        }
+        let mut at = out.len;
+        if bytes.len() - index < 16 {
+            // Fewer than sixteen bytes are left: spell each.
+            for &byte in &bytes[index..] {
+                at = spell(&mut out.buffer[..], at, byte);
+            }
+            out.len = at;
+            break;
+        }
+        // The next sixteen bytes are staged as they are; when some need
+        // escaping, the run from the first to the last of them is spelled
+        // over its copy, and the bytes after it start the next step.
+        let chunk = builtin::loadUnaligned[u8x16](&bytes[index]);
+        builtin::storeUnaligned[u8x16](&mut out.buffer[at], chunk);
+        let special = (chunk < builtin::splat[u8x16](0x20))
+            | (chunk == builtin::splat[u8x16](b'"'))
+            | (chunk == builtin::splat[u8x16](b'\\'));
+        let mask = builtin::bitmask(special);
+        if mask == 0 {
+            out.len = at + 16;
+            index += 16;
+            continue;
+        }
+        let first = builtin::ctz[u16](mask) as usize;
+        let last = 15 - builtin::clz[u16](mask) as usize;
+        at += first;
+        let run = &bytes[(index + first)..(index + last + 1)];
+        for &byte in run {
+            at = spell(&mut out.buffer[..], at, byte);
+        }
+        out.len = at;
+        index += last + 1;
+    }
+    out.byte(b'"')
+}
+
+// Stages the spelling of `byte` at `at` as one eight-byte entry, of which
+// the bytes past its length are overwritten by what follows, and returns
+// where the next spelling goes.
+@[inlineAlways]
+fun spell(buffer: &mut [u8], at: usize, byte: u8) usize {
+    let entry = spellings[byte as usize];
+    builtin::storeUnaligned[[u8; 8]](&mut buffer[at], entry);
+    at + entry[7] as usize
+}
+
+// Room one step of `writeEscaped` stages into: up to sixteen bytes that each
+// spell as six or fewer, the last stored as a whole entry.
+const escapeStep: usize = 15 * 6 + 8;
+
+// How each byte is spelled inside a JSON string, padded to eight bytes with
+// the length in the last: itself, a two-byte escape, or `\u00XX` for the
+// other control characters.
+static spellings: [[u8; 8]; 256] = spellingTable;
+const spellingTable: [[u8; 8]; 256] = spellAll();
+
+const fun spellAll() [[u8; 8]; 256] {
+    let hex = b"0123456789abcdef";
+    let mut table: [[u8; 8]; 256] = [[0; 8]; 256];
+    let mut code: usize = 0;
+    while code < 256 {
+        let byte = code as u8;
+        table[code] = match byte {
+            b'"' => [b'\\', b'"', 0, 0, 0, 0, 0, 2],
+            b'\\' => [b'\\', b'\\', 0, 0, 0, 0, 0, 2],
+            0x08 => [b'\\', b'b', 0, 0, 0, 0, 0, 2],
+            b'\t' => [b'\\', b't', 0, 0, 0, 0, 0, 2],
+            b'\n' => [b'\\', b'n', 0, 0, 0, 0, 0, 2],
+            0x0c => [b'\\', b'f', 0, 0, 0, 0, 0, 2],
+            b'\r' => [b'\\', b'r', 0, 0, 0, 0, 0, 2],
+            0..=0x1f => [b'\\', b'u', b'0', b'0', hex[code >> 4], hex[code & 15], 0, 6],
+            _ => [byte, 0, 0, 0, 0, 0, 0, 1],
+        };
+        code += 1;
+    }
+    table
+}
+
+// How many bytes of output are staged before they are handed to the writer.
+const stageBytes: usize = 4096;
+
+// Output staged in memory and handed to the writer in blocks, as a JSON
+// writer that builds its text in a buffer would: the writer is called once
+// per block, not once per token, whatever its cost per call.
+struct Staged[W] {
+    output: &mut W,
+    buffer: [u8; stageBytes],
+    len: usize,
+}
+
+extend[W] Staged[W]
+where W: io::Writer
+{
+    fun init(output: &mut W) Staged[W] {
+        .{ output, buffer: [0; stageBytes], len: 0 }
+    }
+
+    @[inlineAlways]
+    fun byte(&mut self, byte: u8) [W as io::Writer]::Error!() {
+        if self.len == stageBytes {
+            self.flush().?;
+        }
+        self.buffer[self.len] = byte;
+        self.len += 1;
+        !()
+    }
+
+    @[inlineAlways]
+    fun bytes(&mut self, bytes: &[u8]) [W as io::Writer]::Error!() {
+        if bytes.len() > stageBytes - self.len {
+            self.flush().?;
+            // A run longer than the stage goes to the writer whole.
+            if bytes.len() > stageBytes {
+                return self.output.writeAll(bytes);
+            }
+        }
+        _ = (&mut self.buffer[self.len..(self.len + bytes.len())]).copyFrom(bytes);
+        self.len += bytes.len();
+        !()
+    }
+
+    // Stages `image[start..(start + len)]`. Short runs, the common case for
+    // keys, numbers, and strings, move as one sixteen-byte block when the
+    // block stays inside both the image and the stage; the bytes past `len`
+    // are overwritten by what follows.
+    @[inlineAlways]
+    fun span(&mut self, image: &[u8], start: usize, len: usize) [W as io::Writer]::Error!() {
+        if len <= 16 and image.len() - start >= 16 and stageBytes - self.len >= 16 {
+            let block = builtin::loadUnaligned[[u8; 16]](&image[start]);
+            (&mut self.buffer[self.len] as &mut [u8; 16]).* = block;
+            self.len += len;
+            return !();
+        }
+        self.bytes(&image[start..(start + len)])
+    }
+
+    fun flush(&mut self) [W as io::Writer]::Error!() {
+        if self.len != 0 {
+            self.output.writeAll(&self.buffer[0..self.len]).?;
+            self.len = 0;
+        }
+        !()
+    }
+}
