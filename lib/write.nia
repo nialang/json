@@ -1,6 +1,7 @@
 // Writes values as JSON text.
 
 using std::builtin;
+using std::slice;
 using std::io;
 using root::tape;
 using root::tape::{Kind, Node};

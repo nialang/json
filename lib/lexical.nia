@@ -6,6 +6,7 @@
 // longer, so writing never overtakes reading.
 
 using std::builtin;
+using std::slice;
 using root::error::Code;
 using root::tape;
 
