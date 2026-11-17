@@ -1,26 +1,48 @@
 # Benchmarks
 
-The benchmarks measure parsing and writing on deterministic corpora, for this
-library and for two comparators: [yyjson](https://github.com/ibireme/yyjson),
-among the fastest C libraries with the same kind of document model, and
-[serde_json](https://github.com/serde-rs/json), Rust's common JSON library.
+The benchmarks measure how fast this library parses and writes JSON and how
+much memory a parsed document takes, on deterministic corpora and the
+standard real-world documents, next to seven other libraries:
+
+| Library | Language | What is measured |
+| --- | --- | --- |
+| [yyjson](https://github.com/ibireme/yyjson) 0.12.0 | C | its immutable DOM |
+| [simdjson](https://github.com/simdjson/simdjson) 5.2.0 | C++ | its DOM API, a new parser per document |
+| [RapidJSON](https://github.com/Tencent/rapidjson) `297637b` | C++ | `Document` with its default allocator and flags |
+| [sonic-rs](https://github.com/cloudwego/sonic-rs) 0.5.11 | Rust | its `Value` DOM |
+| [serde_json](https://github.com/serde-rs/json) 1.0.151 | Rust | its `Value` DOM |
+| [nlohmann/json](https://github.com/nlohmann/json) 3.12.0 | C++ | `nlohmann::json` |
+| [cJSON](https://github.com/DaveGamble/cJSON) 1.7.19 | C | its tree of items |
+
+Every library parses into a document that a program can then read in any
+order, as this one does; none is measured in a streaming or on-demand mode.
+RapidJSON's last release, 1.1.0 from 2016, does not build with current
+compilers, so its master branch is measured.
 
 ## Running
 
+On Linux, with a C and C++ compiler, cargo, git, and GNU time:
+
 ```sh
 nia build bench -O2
-python tools/vendor.py                 # once: fetch yyjson
-python tools/comparators.py --cc clang # build the yyjson and serde_json harnesses
-python tools/bench.py --yyjson build/out/yyjson --serde build/out/serde
+python tools/vendor.py                                 # once: fetch the libraries and documents
+python tools/comparators.py --cc clang --cxx clang++   # build the other harnesses into build/out
+python tools/bench.py --comparators build/out --output bench/results.json
+python tools/bench.py --comparators build/out --memory --output bench/memory.json
+python tools/charts.py bench/results.json bench/memory.json docs/images
 ```
 
-`tools/bench.py` prints throughput as it goes and writes every sample, with
-the platform and the hash of each corpus, to `build/benchmark.json`.
-`--corpus` selects corpora, `--repeat` sets the number of processes measured
-per result (5 by default), and `--megabytes` how much input each process
-handles (32 by default).
+`tools/bench.py` prints each result as it goes and writes every sample, with
+the platform and the hash of each corpus, to `--output`. `--corpus` selects
+corpora, `--repeat` sets the number of processes measured per result (5 by
+default), and `--megabytes` how much input each process handles when
+measuring speed (32 by default). `tools/charts.py` draws the charts of the
+README from the two results files and prints the tables below.
 
-To compare two builds of the library, keep the bench executable of each and
+When the results are measured again, replace the results files, the charts,
+and the tables here and in the README together.
+
+To compare two builds of this library, keep the bench executable of each and
 run them interleaved, so that drift of the machine affects both alike:
 
 ```sh
@@ -29,35 +51,48 @@ python tools/ab.py build/out/bench-old,build/out/bench parse records-100k,mixed-
 
 ## Method
 
-Each harness, `bench/main.nia` for this library and `bench/yyjson/main.c` and
-`bench/serde/src/main.rs` for the comparators, reads the corpus from standard
-input, runs the measured operation a given number of times, and reports the
-time of that loop alone with a monotonic clock. Reading the input and
-starting the process are excluded. The operations are:
+Each library has a harness: `bench/main.nia` for this one, and `bench/*/` for
+the others, which share `bench/common/harness.h` or follow it. A harness reads
+the corpus from standard input, runs the measured operation a given number of
+times, and prints one line reporting its iteration, value, and input byte
+counts and the time of that loop alone, taken with a monotonic clock.
+`tools/bench.py` checks the counts, so every library is seen to read the
+whole document. Reading the input and starting the process are not timed.
 
 | Mode | Each iteration |
 | --- | --- |
 | `parse` | parses the text into a new document and releases it |
-| `reuse` | parses the text into one document that keeps its storage; this library only |
+| `reuse` | parses into one document that keeps its storage; this library and simdjson only |
 | `write` | writes a parsed document as compact text into memory |
 | `roundtrip` | parses into a new document, writes it, and releases it |
 
 Every harness writes into memory: this library into a buffer sized by one
-untimed write and reused, yyjson into the buffer its writer allocates, and
-serde_json into a reused `Vec`. Each harness also reports its iteration,
-value, and input byte counts, which `tools/bench.py` checks, so every
-implementation is seen to read the whole document.
+untimed write and reused, the Rust libraries into a reused `Vec`, and the C
+and C++ libraries into the string or buffer their writer returns. On glibc
+the C and C++ harnesses keep freed memory in the heap with `mallopt`, as the
+Nia allocator does; otherwise every parse of a large document faults its
+buffer in again, and the comparison measures the allocator.
 
-Comparators are built optimized, the C one with the clang of the LLVM release
-the Nia compiler uses. On glibc the yyjson harness keeps freed memory in the
-heap with `mallopt`, as the Nia allocator does; otherwise every parse of a
-large document faults its buffer in again, and the comparison measures the
-allocator.
+Memory is measured with two more modes: `read` only reads the input, and
+`load` reads it and parses it once, keeping the document. The memory of a
+document is the difference of their peak resident memory, as GNU time
+reports it, the median of five pairs of processes. Each corpus for memory is
+about 20 MB, so that the document stands well above what a process starts
+with, except the real-world documents, which are measured as they are.
+
+The libraries are compiled with clang 23.1.2 at `-O3`, the clang of the LLVM
+release the Nia compiler uses, and rustc 1.98.1 in release mode, each for the
+baseline of the target, as this library is; simdjson and sonic-rs choose
+their SIMD kernels at run time either way. This library is built with the
+Nia compiler at nialang/nia `820d5ff13` with `-O2`.
 
 ## Corpora
 
-The corpora are generated by `tools/bench.py`, so they are identical on every
-machine; their hashes are recorded with the results.
+The synthetic corpora are generated by `tools/bench.py`, so they are
+identical on every machine; their hashes are recorded with the results. The
+real-world documents are those of
+[nativejson-benchmark](https://github.com/miloyip/nativejson-benchmark), which
+most JSON libraries report on.
 
 | Corpus | Contents |
 | --- | --- |
@@ -69,65 +104,98 @@ machine; their hashes are recorded with the results.
 | `escapes-100k` | strings dense with escapes |
 | `records-pretty`, `-tabs`, `-crlf` | the records indented by spaces or tabs, with LF or CRLF line ends |
 | `mixed-100k` | messages shaped like an API feed: large ids, text of every length with Unicode and escapes, nested objects, coordinates, and nulls |
+| `twitter` | a Twitter API response, 617 KB of text with much Unicode |
+| `citm_catalog` | a catalog of events, 1.7 MB, nested objects with many repeated keys |
+| `canada` | the outline of Canada as GeoJSON, 2.2 MB, almost all floating-point numbers |
+| `records-20m`, `integers-20m`, `strings-20m`, `records-pretty-20m`, `mixed-20m` | the synthetic corpora at about 20 MB, for memory |
 
 ## Results
 
-Throughput in MB/s of input, as the median of five processes. Measured on an
-Intel Core i9-13900HX under Linux 6.18 (WSL 2); the Nia compiler at
-nialang/nia `890ec5e62`, yyjson 0.12.0 built with clang 23.1.2, serde_json
-1.0.151 with rustc 1.98.1.
-
-Every sample of this run is in [bench/results.json](../bench/results.json).
-The charts in the README are drawn from it:
-
-```sh
-python tools/charts.py bench/results.json docs/images \
-    --note "Median of five processes on Linux, Intel Core i9-13900HX. Higher is faster."
-```
-
-When the results are measured again, replace that file, the tables here and
-in the README, and the charts together.
+The median of five processes, on an Intel Core i9-13900HX under Linux 6.18
+(WSL 2). Every sample is in [bench/results.json](../bench/results.json) and
+[bench/memory.json](../bench/memory.json).
 
 ### Parsing
 
-| Corpus | json | yyjson | serde_json |
-| --- | ---: | ---: | ---: |
-| small | 1059 | 1691 | 263 |
-| records-100k | 1335 | 1871 | 170 |
-| records-2m | 1361 | 1786 | 140 |
-| integers-100k | 1167 | 1514 | 424 |
-| strings-100k | 7491 | 4393 | 4509 |
-| unicode-100k | 2294 | 3513 | 1416 |
-| escapes-100k | 1202 | 2175 | 394 |
-| records-pretty | 2000 | 2879 | 307 |
-| records-tabs | 1550 | 1645 | 265 |
-| records-crlf | 1728 | 1809 | 305 |
-| mixed-100k | 1265 | 1915 | 225 |
+MB/s of input.
+
+| Document | json | yyjson | simdjson | RapidJSON | sonic-rs | serde_json | nlohmann/json | cJSON | json's rank |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| small | 959 | 1,693 | 784 | 475 | 794 | 253 | 108 | 243 | 2 of 8 |
+| records-1k | 1,201 | 1,716 | 1,159 | 540 | 948 | 194 | 98 | 166 | 2 of 8 |
+| records-100k | 1,456 | 1,949 | 1,715 | 544 | 1,113 | 163 | 93 | 165 | 3 of 8 |
+| records-2m | 1,440 | 1,915 | 1,559 | 547 | 1,064 | 139 | 85 | 148 | 3 of 8 |
+| integers-100k | 1,112 | 1,456 | 1,059 | 661 | 1,110 | 402 | 144 | 98 | 2 of 8 |
+| strings-100k | 7,707 | 4,398 | 10,033 | 1,057 | 11,787 | 5,125 | 558 | 1,299 | 3 of 8 |
+| unicode-100k | 2,266 | 3,164 | 7,190 | 992 | 8,203 | 1,487 | 323 | 1,179 | 4 of 8 |
+| escapes-100k | 1,160 | 1,640 | 559 | 1,494 | 1,596 | 390 | 373 | 1,173 | 5 of 8 |
+| records-pretty | 1,938 | 2,998 | 2,794 | 987 | 923 | 288 | 151 | 290 | 3 of 8 |
+| records-tabs | 1,413 | 1,775 | 2,212 | 793 | 1,012 | 233 | 133 | 248 | 3 of 8 |
+| records-crlf | 1,788 | 1,914 | 3,099 | 1,077 | 1,089 | 325 | 170 | 325 | 3 of 8 |
+| mixed-100k | 1,301 | 1,757 | 2,086 | 619 | 1,151 | 219 | 117 | 267 | 3 of 8 |
+| twitter | 2,681 | 3,865 | 4,743 | 852 | 1,522 | 317 | 195 | 565 | 3 of 8 |
+| citm_catalog | 3,422 | 3,996 | 4,695 | 1,562 | 1,831 | 609 | 269 | 659 | 3 of 8 |
+| canada | 1,497 | 1,472 | 1,316 | 859 | 1,193 | 309 | 106 | 155 | 1 of 8 |
 
 ### Writing
 
-| Corpus | json | yyjson | serde_json |
-| --- | ---: | ---: | ---: |
-| small | 1218 | 2359 | 1085 |
-| records-100k | 1512 | 2016 | 931 |
-| integers-100k | 1463 | 2921 | 965 |
-| strings-100k | 24331 | 34035 | 3238 |
-| unicode-100k | 19526 | 33989 | 3313 |
-| escapes-100k | 1966 | 2337 | 1307 |
-| mixed-100k | 2184 | 1865 | 1199 |
+MB/s of input, writing compact text into memory.
+
+| Document | json | yyjson | simdjson | RapidJSON | sonic-rs | serde_json | nlohmann/json | cJSON | json's rank |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| small | 1,162 | 2,461 | 1,086 | 969 | 851 | 1,067 | 328 | 150 | 2 of 8 |
+| records-1k | 1,269 | 2,049 | 923 | 882 | 677 | 897 | 373 | 192 | 2 of 8 |
+| records-100k | 1,435 | 2,373 | 1,031 | 1,022 | 658 | 908 | 401 | 201 | 2 of 8 |
+| records-2m | 1,398 | 2,231 | 938 | 927 | 691 | 842 | 383 | 196 | 2 of 8 |
+| integers-100k | 1,434 | 2,962 | 888 | 1,079 | 790 | 912 | 631 | 149 | 2 of 8 |
+| strings-100k | 21,586 | 35,453 | 9,003 | 1,866 | 19,959 | 3,451 | 618 | 805 | 2 of 8 |
+| unicode-100k | 20,821 | 27,386 | 9,948 | 1,898 | 17,874 | 3,059 | 551 | 1,468 | 2 of 8 |
+| escapes-100k | 1,971 | 2,214 | 850 | 1,492 | 1,375 | 1,395 | 813 | 1,634 | 2 of 8 |
+| records-pretty | 2,629 | 4,112 | 1,978 | 1,858 | 1,273 | 1,646 | 725 | 364 | 2 of 8 |
+| records-tabs | 2,146 | 3,609 | 1,629 | 1,447 | 1,066 | 1,440 | 619 | 298 | 2 of 8 |
+| records-crlf | 2,998 | 4,462 | 2,120 | 1,925 | 1,393 | 1,938 | 774 | 405 | 2 of 8 |
+| mixed-100k | 1,883 | 1,711 | 1,312 | 1,013 | 1,109 | 1,060 | 355 | 175 | 1 of 8 |
+| twitter | 4,689 | 5,768 | 3,856 | 1,596 | 2,778 | 2,414 | 645 | 808 | 2 of 8 |
+| citm_catalog | 6,692 | 10,522 | 5,385 | 4,024 | 3,622 | 5,257 | 1,647 | 1,348 | 2 of 8 |
+| canada | 1,542 | 1,355 | 845 | 422 | 927 | 1,145 | 358 | 43 | 1 of 8 |
+
+### Memory
+
+Bytes of peak resident memory a parsed document adds, per byte of input.
+
+| Document | json | yyjson | simdjson | RapidJSON | sonic-rs | serde_json | nlohmann/json | cJSON | json's rank |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| records-20m | 3.19 | 3.93 | 4.39 | 3.09 | 4.55 | 16.78 | 9.84 | 12.00 | 2 of 8 |
+| integers-20m | 2.57 | 3.10 | 3.14 | 4.19 | 5.20 | 4.20 | 5.03 | 10.49 | 1 of 8 |
+| strings-20m | 1.03 | 1.03 | 1.04 | 1.11 | 1.08 | 1.12 | 1.18 | 1.21 | 2 of 8 |
+| records-pretty-20m | 2.18 | 2.57 | 2.36 | 1.67 | 2.91 | 8.99 | 5.28 | 6.43 | 2 of 8 |
+| mixed-20m | 2.02 | 2.36 | 2.45 | 1.83 | 2.56 | 6.21 | 5.59 | 5.83 | 2 of 8 |
+| twitter | 1.66 | 1.62 | 1.25 | 1.30 | 2.13 | 4.16 | 2.87 | 2.91 | 4 of 8 |
+| citm_catalog | 1.52 | 1.49 | 0.91 | 0.60 | 1.77 | 5.00 | 2.29 | 2.12 | 4 of 8 |
+| canada | 1.98 | 2.08 | 1.76 | 1.38 | 2.79 | 4.56 | 2.45 | 5.94 | 3 of 8 |
+
+`reuse`, parsing into a document that keeps its storage, changes little for
+either library that offers it: the allocators keep the memory a released
+document returns. The results file holds those numbers too.
 
 ### Summary
 
-On structured documents this library parses at 55 to 95 percent of yyjson's
-speed, closest on indented text, and leads it on long plain strings. Both
-parse three to ten times as fast as serde_json, which builds a tree of
-separately allocated values. `reuse` adds little over `parse` because the
-general-purpose allocator keeps the memory a released document returns.
-Writing is at 50 to 85 percent of yyjson, and ahead of it on the mixed
-corpus.
+This library parses third fastest of the eight on most documents, behind
+yyjson and simdjson, second on small documents and integers, and fastest on
+`canada`, the document of numbers; strings dense with escapes or non-ASCII
+text are its weakest, where it is fifth and fourth. It writes second
+fastest, behind yyjson, and fastest on the API feed and `canada`. On
+structured documents it parses about five to fifteen times as fast as
+serde_json, nlohmann/json, and cJSON, which build a tree of separately
+allocated values.
 
-Numbers from one machine show how the implementations compare there, not
-how fast any of them is in general. Compare results only between runs on the
-same machine with the same compiler versions, and repeat a measurement
-before acting on a difference of a few percent: changes of code layout alone
-move single results by about three percent.
+Its documents are the smallest or second smallest on the synthetic corpora,
+and third or fourth on the real-world documents. There RapidJSON and
+simdjson, which copy the strings of a document but not its whole text, are
+smaller, and yyjson narrowly so on two of them.
+
+Numbers from one machine show how the libraries compare there, not how fast
+any of them is in general. Compare results only between runs on the same
+machine with the same compiler versions, and repeat a measurement before
+acting on a difference of a few percent: changes of code layout alone move
+single results by about three percent.

@@ -1,0 +1,2004 @@
+{
+  "schema": 3,
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "python": "3.12.3",
+  "repeat": 5,
+  "method": "fresh process per sample; peak resident memory (ru_maxrss) of a process that reads the input and parses it once, minus that of one that only reads it",
+  "implementations": [
+    "nia",
+    "yyjson",
+    "simdjson",
+    "rapidjson",
+    "sonic",
+    "serde",
+    "nlohmann",
+    "cjson"
+  ],
+  "samples": [
+    {
+      "implementation": "nia",
+      "corpus": "records-20m",
+      "mode": "memory",
+      "sha256": "fa819addad237fa58781b1d3476cc42fb2a023521bf85b008182f7b520dc11fa",
+      "input_bytes": 20800001,
+      "nodes": 3800001,
+      "read_kilobytes": [
+        52992,
+        52992,
+        52992,
+        52992,
+        52992
+      ],
+      "load_kilobytes": [
+        117760,
+        117760,
+        117760,
+        117760,
+        117760
+      ],
+      "parse_seconds": [
+        0.028881697,
+        0.037979749,
+        0.033616101,
+        0.033699005,
+        0.030952265
+      ],
+      "document_bytes": 66322432,
+      "bytes_per_input_byte": 3.1885783082414276
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-20m",
+      "mode": "memory",
+      "sha256": "fa819addad237fa58781b1d3476cc42fb2a023521bf85b008182f7b520dc11fa",
+      "input_bytes": 20800001,
+      "nodes": 3800001,
+      "read_kilobytes": [
+        21884,
+        21884,
+        21832,
+        21884,
+        21884
+      ],
+      "load_kilobytes": [
+        101756,
+        101752,
+        101740,
+        101728,
+        101744
+      ],
+      "parse_seconds": [
+        0.028152925,
+        0.030839909,
+        0.027566639,
+        0.032339456,
+        0.029459312
+      ],
+      "document_bytes": 81784832,
+      "bytes_per_input_byte": 3.9319628878863995
+    },
+    {
+      "implementation": "simdjson",
+      "corpus": "records-20m",
+      "mode": "memory",
+      "sha256": "fa819addad237fa58781b1d3476cc42fb2a023521bf85b008182f7b520dc11fa",
+      "input_bytes": 20800001,
+      "nodes": 3800001,
+      "read_kilobytes": [
+        24272,
+        24288,
+        24288,
+        24280,
+        24288
+      ],
+      "load_kilobytes": [
+        113320,
+        113424,
+        113320,
+        113380,
+        113412
+      ],
+      "parse_seconds": [
+        0.042171417,
+        0.036786416,
+        0.045541648,
+        0.030298569,
+        0.03182851
+      ],
+      "document_bytes": 91238400,
+      "bytes_per_input_byte": 4.386461327573975
+    },
+    {
+      "implementation": "rapidjson",
+      "corpus": "records-20m",
+      "mode": "memory",
+      "sha256": "fa819addad237fa58781b1d3476cc42fb2a023521bf85b008182f7b520dc11fa",
+      "input_bytes": 20800001,
+      "nodes": 3800001,
+      "read_kilobytes": [
+        24036,
+        24008,
+        24044,
+        24148,
+        23992
+      ],
+      "load_kilobytes": [
+        86836,
+        86720,
+        86724,
+        86728,
+        86764
+      ],
+      "parse_seconds": [
+        0.051483172,
+        0.056849683,
+        0.055911082,
+        0.056512908,
+        0.053815628
+      ],
+      "document_bytes": 64217088,
+      "bytes_per_input_byte": 3.087359851569238
+    },
+    {
+      "implementation": "sonic",
+      "corpus": "records-20m",
+      "mode": "memory",
+      "sha256": "fa819addad237fa58781b1d3476cc42fb2a023521bf85b008182f7b520dc11fa",
+      "input_bytes": 20800001,
+      "nodes": 3800001,
+      "read_kilobytes": [
+        22424,
+        22420,
+        22460,
+        22396,
+        22460
+      ],
+      "load_kilobytes": [
+        114832,
+        114832,
+        114788,
+        114868,
+        114868
+      ],
+      "parse_seconds": [
+        0.042910402,
+        0.042222934,
+        0.039147396,
+        0.041188572,
+        0.038643171
+      ],
+      "document_bytes": 94625792,
+      "bytes_per_input_byte": 4.549316704359774
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-20m",
+      "mode": "memory",
+      "sha256": "fa819addad237fa58781b1d3476cc42fb2a023521bf85b008182f7b520dc11fa",
+      "input_bytes": 20800001,
+      "nodes": 3800001,
+      "read_kilobytes": [
+        22412,
+        22172,
+        22172,
+        22168,
+        22172
+      ],
+      "load_kilobytes": [
+        362928,
+        362960,
+        362952,
+        362964,
+        362968
+      ],
+      "parse_seconds": [
+        0.272256568,
+        0.173413759,
+        0.205000293,
+        0.16920412,
+        0.17065664
+      ],
+      "document_bytes": 348966912,
+      "bytes_per_input_byte": 16.777254578016606
+    },
+    {
+      "implementation": "nlohmann",
+      "corpus": "records-20m",
+      "mode": "memory",
+      "sha256": "fa819addad237fa58781b1d3476cc42fb2a023521bf85b008182f7b520dc11fa",
+      "input_bytes": 20800001,
+      "nodes": 3800001,
+      "read_kilobytes": [
+        24044,
+        24276,
+        24256,
+        24256,
+        24284
+      ],
+      "load_kilobytes": [
+        224200,
+        224172,
+        224200,
+        223880,
+        224212
+      ],
+      "parse_seconds": [
+        0.217483753,
+        0.216725437,
+        0.21597208,
+        0.221282642,
+        0.215169711
+      ],
+      "document_bytes": 204726272,
+      "bytes_per_input_byte": 9.842608757566886
+    },
+    {
+      "implementation": "cjson",
+      "corpus": "records-20m",
+      "mode": "memory",
+      "sha256": "fa819addad237fa58781b1d3476cc42fb2a023521bf85b008182f7b520dc11fa",
+      "input_bytes": 20800001,
+      "nodes": 3800001,
+      "read_kilobytes": [
+        21812,
+        21812,
+        21812,
+        21812,
+        21812
+      ],
+      "load_kilobytes": [
+        265268,
+        265524,
+        265524,
+        265524,
+        265524
+      ],
+      "parse_seconds": [
+        0.194323209,
+        0.167551315,
+        0.172833729,
+        0.166252398,
+        0.171893061
+      ],
+      "document_bytes": 249561088,
+      "bytes_per_input_byte": 11.998128653936122
+    },
+    {
+      "implementation": "nia",
+      "corpus": "integers-20m",
+      "mode": "memory",
+      "sha256": "73502a29bc1adc506a46763a37b8c02ef5855e0f6e078a3b7b421db2c3d8dd07",
+      "input_bytes": 22888891,
+      "nodes": 3000001,
+      "read_kilobytes": [
+        55040,
+        55040,
+        55040,
+        55040,
+        55040
+      ],
+      "load_kilobytes": [
+        112384,
+        112384,
+        112384,
+        112384,
+        112384
+      ],
+      "parse_seconds": [
+        0.027246577,
+        0.028167265,
+        0.029522483,
+        0.02694572,
+        0.027719489
+      ],
+      "document_bytes": 58720256,
+      "bytes_per_input_byte": 2.5654478410509274
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "integers-20m",
+      "mode": "memory",
+      "sha256": "73502a29bc1adc506a46763a37b8c02ef5855e0f6e078a3b7b421db2c3d8dd07",
+      "input_bytes": 22888891,
+      "nodes": 3000001,
+      "read_kilobytes": [
+        23932,
+        23932,
+        23928,
+        23932,
+        23932
+      ],
+      "load_kilobytes": [
+        93304,
+        93276,
+        93272,
+        93264,
+        93308
+      ],
+      "parse_seconds": [
+        0.026633228,
+        0.027214956,
+        0.027512586,
+        0.02755841,
+        0.029677213
+      ],
+      "document_bytes": 71008256,
+      "bytes_per_input_byte": 3.1023021604672762
+    },
+    {
+      "implementation": "simdjson",
+      "corpus": "integers-20m",
+      "mode": "memory",
+      "sha256": "73502a29bc1adc506a46763a37b8c02ef5855e0f6e078a3b7b421db2c3d8dd07",
+      "input_bytes": 22888891,
+      "nodes": 3000001,
+      "read_kilobytes": [
+        26288,
+        26316,
+        26404,
+        26476,
+        26332
+      ],
+      "load_kilobytes": [
+        96488,
+        96656,
+        96424,
+        96432,
+        96528
+      ],
+      "parse_seconds": [
+        0.032491219,
+        0.035023484,
+        0.033508397,
+        0.039268395,
+        0.03492728
+      ],
+      "document_bytes": 71880704,
+      "bytes_per_input_byte": 3.140418817145837
+    },
+    {
+      "implementation": "rapidjson",
+      "corpus": "integers-20m",
+      "mode": "memory",
+      "sha256": "73502a29bc1adc506a46763a37b8c02ef5855e0f6e078a3b7b421db2c3d8dd07",
+      "input_bytes": 22888891,
+      "nodes": 3000001,
+      "read_kilobytes": [
+        26092,
+        26092,
+        26092,
+        26092,
+        26092
+      ],
+      "load_kilobytes": [
+        119788,
+        119860,
+        119736,
+        119856,
+        119736
+      ],
+      "parse_seconds": [
+        0.049576844,
+        0.048802595,
+        0.047818508,
+        0.046931724,
+        0.051285941
+      ],
+      "document_bytes": 95944704,
+      "bytes_per_input_byte": 4.191758526002855
+    },
+    {
+      "implementation": "sonic",
+      "corpus": "integers-20m",
+      "mode": "memory",
+      "sha256": "73502a29bc1adc506a46763a37b8c02ef5855e0f6e078a3b7b421db2c3d8dd07",
+      "input_bytes": 22888891,
+      "nodes": 3000001,
+      "read_kilobytes": [
+        24372,
+        24508,
+        24464,
+        24440,
+        24436
+      ],
+      "load_kilobytes": [
+        140476,
+        140728,
+        140720,
+        140428,
+        140720
+      ],
+      "parse_seconds": [
+        0.049596448,
+        0.048893438,
+        0.048831512,
+        0.046509546,
+        0.053622845
+      ],
+      "document_bytes": 119009280,
+      "bytes_per_input_byte": 5.199434083547342
+    },
+    {
+      "implementation": "serde",
+      "corpus": "integers-20m",
+      "mode": "memory",
+      "sha256": "73502a29bc1adc506a46763a37b8c02ef5855e0f6e078a3b7b421db2c3d8dd07",
+      "input_bytes": 22888891,
+      "nodes": 3000001,
+      "read_kilobytes": [
+        24280,
+        24220,
+        24220,
+        24220,
+        24220
+      ],
+      "load_kilobytes": [
+        118232,
+        118188,
+        118224,
+        118232,
+        118204
+      ],
+      "parse_seconds": [
+        0.057195161,
+        0.058219714,
+        0.057063975,
+        0.058309967,
+        0.059378769
+      ],
+      "document_bytes": 96239616,
+      "bytes_per_input_byte": 4.204643029668847
+    },
+    {
+      "implementation": "nlohmann",
+      "corpus": "integers-20m",
+      "mode": "memory",
+      "sha256": "73502a29bc1adc506a46763a37b8c02ef5855e0f6e078a3b7b421db2c3d8dd07",
+      "input_bytes": 22888891,
+      "nodes": 3000001,
+      "read_kilobytes": [
+        26332,
+        26336,
+        26256,
+        26276,
+        26332
+      ],
+      "load_kilobytes": [
+        138668,
+        138668,
+        138668,
+        138668,
+        138668
+      ],
+      "parse_seconds": [
+        0.143251778,
+        0.14293193,
+        0.133589864,
+        0.142631556,
+        0.133716917
+      ],
+      "document_bytes": 115032064,
+      "bytes_per_input_byte": 5.02567223549625
+    },
+    {
+      "implementation": "cjson",
+      "corpus": "integers-20m",
+      "mode": "memory",
+      "sha256": "73502a29bc1adc506a46763a37b8c02ef5855e0f6e078a3b7b421db2c3d8dd07",
+      "input_bytes": 22888891,
+      "nodes": 3000001,
+      "read_kilobytes": [
+        23860,
+        23860,
+        23860,
+        23860,
+        23860
+      ],
+      "load_kilobytes": [
+        258356,
+        258356,
+        258356,
+        258356,
+        258356
+      ],
+      "parse_seconds": [
+        0.274863324,
+        0.223412052,
+        0.225881784,
+        0.219067192,
+        0.238215607
+      ],
+      "document_bytes": 240123904,
+      "bytes_per_input_byte": 10.490849207154685
+    },
+    {
+      "implementation": "nia",
+      "corpus": "strings-20m",
+      "mode": "memory",
+      "sha256": "2efac0711ddee7e03cc621eace0caa1b9bc60576b8e70dac90a3509b3bed709e",
+      "input_bytes": 20880001,
+      "nodes": 48001,
+      "read_kilobytes": [
+        52992,
+        52992,
+        52992,
+        52992,
+        52992
+      ],
+      "load_kilobytes": [
+        73984,
+        73984,
+        73984,
+        73984,
+        73984
+      ],
+      "parse_seconds": [
+        0.007809701,
+        0.007685304,
+        0.007874753,
+        0.007438484,
+        0.008183346
+      ],
+      "document_bytes": 21495808,
+      "bytes_per_input_byte": 1.0294926710013088
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "strings-20m",
+      "mode": "memory",
+      "sha256": "2efac0711ddee7e03cc621eace0caa1b9bc60576b8e70dac90a3509b3bed709e",
+      "input_bytes": 20880001,
+      "nodes": 48001,
+      "read_kilobytes": [
+        22140,
+        22140,
+        22140,
+        22140,
+        22140
+      ],
+      "load_kilobytes": [
+        43120,
+        43096,
+        43100,
+        43100,
+        43132
+      ],
+      "parse_seconds": [
+        0.011070693,
+        0.010037787,
+        0.010237172,
+        0.010488726,
+        0.00996272
+      ],
+      "document_bytes": 21463040,
+      "bytes_per_input_byte": 1.0279233224174653
+    },
+    {
+      "implementation": "simdjson",
+      "corpus": "strings-20m",
+      "mode": "memory",
+      "sha256": "2efac0711ddee7e03cc621eace0caa1b9bc60576b8e70dac90a3509b3bed709e",
+      "input_bytes": 20880001,
+      "nodes": 48001,
+      "read_kilobytes": [
+        24236,
+        24304,
+        24368,
+        24256,
+        24280
+      ],
+      "load_kilobytes": [
+        45480,
+        45500,
+        45492,
+        45720,
+        45752
+      ],
+      "parse_seconds": [
+        0.007146136,
+        0.007176692,
+        0.007031942,
+        0.007609435,
+        0.007186142
+      ],
+      "document_bytes": 21753856,
+      "bytes_per_input_byte": 1.041851291099076
+    },
+    {
+      "implementation": "rapidjson",
+      "corpus": "strings-20m",
+      "mode": "memory",
+      "sha256": "2efac0711ddee7e03cc621eace0caa1b9bc60576b8e70dac90a3509b3bed709e",
+      "input_bytes": 20880001,
+      "nodes": 48001,
+      "read_kilobytes": [
+        24008,
+        24040,
+        24044,
+        24004,
+        24260
+      ],
+      "load_kilobytes": [
+        46572,
+        46568,
+        46640,
+        46572,
+        46572
+      ],
+      "parse_seconds": [
+        0.0276325,
+        0.030984674,
+        0.026985422,
+        0.028062935,
+        0.02686673
+      ],
+      "document_bytes": 23105536,
+      "bytes_per_input_byte": 1.1065869201826188
+    },
+    {
+      "implementation": "sonic",
+      "corpus": "strings-20m",
+      "mode": "memory",
+      "sha256": "2efac0711ddee7e03cc621eace0caa1b9bc60576b8e70dac90a3509b3bed709e",
+      "input_bytes": 20880001,
+      "nodes": 48001,
+      "read_kilobytes": [
+        22324,
+        22392,
+        22460,
+        22388,
+        22432
+      ],
+      "load_kilobytes": [
+        44220,
+        44396,
+        44412,
+        44224,
+        44472
+      ],
+      "parse_seconds": [
+        0.008930039,
+        0.009258926,
+        0.009995889,
+        0.00945407,
+        0.008837751
+      ],
+      "document_bytes": 22478848,
+      "bytes_per_input_byte": 1.0765731285166127
+    },
+    {
+      "implementation": "serde",
+      "corpus": "strings-20m",
+      "mode": "memory",
+      "sha256": "2efac0711ddee7e03cc621eace0caa1b9bc60576b8e70dac90a3509b3bed709e",
+      "input_bytes": 20880001,
+      "nodes": 48001,
+      "read_kilobytes": [
+        22172,
+        22172,
+        22232,
+        22168,
+        22172
+      ],
+      "load_kilobytes": [
+        44992,
+        45016,
+        44756,
+        44992,
+        45012
+      ],
+      "parse_seconds": [
+        0.009001871,
+        0.008520071,
+        0.008800455,
+        0.008844089,
+        0.009051897
+      ],
+      "document_bytes": 23371776,
+      "bytes_per_input_byte": 1.119337877426347
+    },
+    {
+      "implementation": "nlohmann",
+      "corpus": "strings-20m",
+      "mode": "memory",
+      "sha256": "2efac0711ddee7e03cc621eace0caa1b9bc60576b8e70dac90a3509b3bed709e",
+      "input_bytes": 20880001,
+      "nodes": 48001,
+      "read_kilobytes": [
+        24288,
+        24208,
+        24204,
+        24276,
+        24208
+      ],
+      "load_kilobytes": [
+        48300,
+        48260,
+        48300,
+        48264,
+        48296
+      ],
+      "parse_seconds": [
+        0.045425803,
+        0.056181759,
+        0.044593539,
+        0.046435956,
+        0.046638717
+      ],
+      "document_bytes": 24629248,
+      "bytes_per_input_byte": 1.1795616293313396
+    },
+    {
+      "implementation": "cjson",
+      "corpus": "strings-20m",
+      "mode": "memory",
+      "sha256": "2efac0711ddee7e03cc621eace0caa1b9bc60576b8e70dac90a3509b3bed709e",
+      "input_bytes": 20880001,
+      "nodes": 48001,
+      "read_kilobytes": [
+        22064,
+        22068,
+        22068,
+        22068,
+        22068
+      ],
+      "load_kilobytes": [
+        46644,
+        46644,
+        46644,
+        46640,
+        46640
+      ],
+      "parse_seconds": [
+        0.01963623,
+        0.019633298,
+        0.01904453,
+        0.022149555,
+        0.017895043
+      ],
+      "document_bytes": 25165824,
+      "bytes_per_input_byte": 1.2052597123917763
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-pretty-20m",
+      "mode": "memory",
+      "sha256": "4e7d913776d1b491c94f764f3a848c11f1cbc2527e534c183f1becdd4177ea3e",
+      "input_bytes": 17460002,
+      "nodes": 1710001,
+      "read_kilobytes": [
+        49664,
+        49664,
+        49664,
+        49664,
+        49664
+      ],
+      "load_kilobytes": [
+        86784,
+        86784,
+        86784,
+        86784,
+        86528
+      ],
+      "parse_seconds": [
+        0.029230922,
+        0.01759556,
+        0.016232379,
+        0.017588768,
+        0.017093861
+      ],
+      "document_bytes": 38010880,
+      "bytes_per_input_byte": 2.1770260965605845
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-pretty-20m",
+      "mode": "memory",
+      "sha256": "4e7d913776d1b491c94f764f3a848c11f1cbc2527e534c183f1becdd4177ea3e",
+      "input_bytes": 17460002,
+      "nodes": 1710001,
+      "read_kilobytes": [
+        18812,
+        18812,
+        18812,
+        18812,
+        18812
+      ],
+      "load_kilobytes": [
+        62580,
+        62552,
+        62576,
+        62552,
+        62528
+      ],
+      "parse_seconds": [
+        0.016805494,
+        0.018724637,
+        0.017572533,
+        0.017455857,
+        0.016686413
+      ],
+      "document_bytes": 44789760,
+      "bytes_per_input_byte": 2.56527805666918
+    },
+    {
+      "implementation": "simdjson",
+      "corpus": "records-pretty-20m",
+      "mode": "memory",
+      "sha256": "4e7d913776d1b491c94f764f3a848c11f1cbc2527e534c183f1becdd4177ea3e",
+      "input_bytes": 17460002,
+      "nodes": 1710001,
+      "read_kilobytes": [
+        20960,
+        20788,
+        20984,
+        20904,
+        20948
+      ],
+      "load_kilobytes": [
+        61144,
+        61140,
+        61104,
+        61132,
+        61176
+      ],
+      "parse_seconds": [
+        0.016114279,
+        0.016365428,
+        0.014529355,
+        0.013330338,
+        0.014349157
+      ],
+      "document_bytes": 41193472,
+      "bytes_per_input_byte": 2.3593051134816596
+    },
+    {
+      "implementation": "rapidjson",
+      "corpus": "records-pretty-20m",
+      "mode": "memory",
+      "sha256": "4e7d913776d1b491c94f764f3a848c11f1cbc2527e534c183f1becdd4177ea3e",
+      "input_bytes": 17460002,
+      "nodes": 1710001,
+      "read_kilobytes": [
+        20716,
+        20680,
+        20680,
+        20716,
+        20716
+      ],
+      "load_kilobytes": [
+        49124,
+        49132,
+        49128,
+        49132,
+        49080
+      ],
+      "parse_seconds": [
+        0.024092707,
+        0.022603369,
+        0.027848489,
+        0.028270548,
+        0.023037402
+      ],
+      "document_bytes": 29097984,
+      "bytes_per_input_byte": 1.6665510118498268
+    },
+    {
+      "implementation": "sonic",
+      "corpus": "records-pretty-20m",
+      "mode": "memory",
+      "sha256": "4e7d913776d1b491c94f764f3a848c11f1cbc2527e534c183f1becdd4177ea3e",
+      "input_bytes": 17460002,
+      "nodes": 1710001,
+      "read_kilobytes": [
+        19132,
+        19092,
+        18988,
+        18996,
+        19060
+      ],
+      "load_kilobytes": [
+        68704,
+        68784,
+        68728,
+        68788,
+        68752
+      ],
+      "parse_seconds": [
+        0.027157231,
+        0.02854534,
+        0.027393485,
+        0.026270017,
+        0.026697326
+      ],
+      "document_bytes": 50884608,
+      "bytes_per_input_byte": 2.91435293077286
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-pretty-20m",
+      "mode": "memory",
+      "sha256": "4e7d913776d1b491c94f764f3a848c11f1cbc2527e534c183f1becdd4177ea3e",
+      "input_bytes": 17460002,
+      "nodes": 1710001,
+      "read_kilobytes": [
+        18844,
+        18844,
+        18844,
+        18884,
+        18844
+      ],
+      "load_kilobytes": [
+        172168,
+        171992,
+        172172,
+        172228,
+        172232
+      ],
+      "parse_seconds": [
+        0.106613369,
+        0.075214598,
+        0.072167905,
+        0.071533886,
+        0.075823412
+      ],
+      "document_bytes": 157007872,
+      "bytes_per_input_byte": 8.992431501439691
+    },
+    {
+      "implementation": "nlohmann",
+      "corpus": "records-pretty-20m",
+      "mode": "memory",
+      "sha256": "4e7d913776d1b491c94f764f3a848c11f1cbc2527e534c183f1becdd4177ea3e",
+      "input_bytes": 17460002,
+      "nodes": 1710001,
+      "read_kilobytes": [
+        20880,
+        20956,
+        20960,
+        20968,
+        21012
+      ],
+      "load_kilobytes": [
+        111116,
+        110828,
+        111020,
+        111020,
+        110972
+      ],
+      "parse_seconds": [
+        0.102886401,
+        0.10482973,
+        0.098077228,
+        0.104417462,
+        0.099852455
+      ],
+      "document_bytes": 92213248,
+      "bytes_per_input_byte": 5.281399624123754
+    },
+    {
+      "implementation": "cjson",
+      "corpus": "records-pretty-20m",
+      "mode": "memory",
+      "sha256": "4e7d913776d1b491c94f764f3a848c11f1cbc2527e534c183f1becdd4177ea3e",
+      "input_bytes": 17460002,
+      "nodes": 1710001,
+      "read_kilobytes": [
+        18740,
+        18740,
+        18740,
+        18740,
+        18740
+      ],
+      "load_kilobytes": [
+        128308,
+        128308,
+        128308,
+        127796,
+        128308
+      ],
+      "parse_seconds": [
+        0.075907611,
+        0.075427589,
+        0.073143934,
+        0.080139037,
+        0.076221274
+      ],
+      "document_bytes": 112197632,
+      "bytes_per_input_byte": 6.425980478123656
+    },
+    {
+      "implementation": "nia",
+      "corpus": "mixed-20m",
+      "mode": "memory",
+      "sha256": "90ee37a9e948ad1a11f5dc720b0c46c7e5a09d38c12fc58dcc8fa9cf98f8917e",
+      "input_bytes": 20286877,
+      "nodes": 1728957,
+      "read_kilobytes": [
+        52480,
+        52480,
+        52480,
+        52480,
+        52480
+      ],
+      "load_kilobytes": [
+        92416,
+        92416,
+        92416,
+        92416,
+        92416
+      ],
+      "parse_seconds": [
+        0.033770822,
+        0.029470309,
+        0.029255098,
+        0.028634561,
+        0.02888239
+      ],
+      "document_bytes": 40894464,
+      "bytes_per_input_byte": 2.01580874177923
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "mixed-20m",
+      "mode": "memory",
+      "sha256": "90ee37a9e948ad1a11f5dc720b0c46c7e5a09d38c12fc58dcc8fa9cf98f8917e",
+      "input_bytes": 20286877,
+      "nodes": 1728957,
+      "read_kilobytes": [
+        21372,
+        21372,
+        21372,
+        21372,
+        21372
+      ],
+      "load_kilobytes": [
+        68220,
+        68172,
+        68220,
+        68200,
+        68220
+      ],
+      "parse_seconds": [
+        0.031046602,
+        0.029669585,
+        0.029947137,
+        0.029020557,
+        0.029676979
+      ],
+      "document_bytes": 47972352,
+      "bytes_per_input_byte": 2.364698716317943
+    },
+    {
+      "implementation": "simdjson",
+      "corpus": "mixed-20m",
+      "mode": "memory",
+      "sha256": "90ee37a9e948ad1a11f5dc720b0c46c7e5a09d38c12fc58dcc8fa9cf98f8917e",
+      "input_bytes": 20286877,
+      "nodes": 1728957,
+      "read_kilobytes": [
+        23752,
+        23856,
+        23832,
+        23756,
+        23760
+      ],
+      "load_kilobytes": [
+        72576,
+        72396,
+        72412,
+        72384,
+        72408
+      ],
+      "parse_seconds": [
+        0.025837485,
+        0.02787162,
+        0.025182141,
+        0.026415176,
+        0.026304638
+      ],
+      "document_bytes": 49795072,
+      "bytes_per_input_byte": 2.4545459609184794
+    },
+    {
+      "implementation": "rapidjson",
+      "corpus": "mixed-20m",
+      "mode": "memory",
+      "sha256": "90ee37a9e948ad1a11f5dc720b0c46c7e5a09d38c12fc58dcc8fa9cf98f8917e",
+      "input_bytes": 20286877,
+      "nodes": 1728957,
+      "read_kilobytes": [
+        23532,
+        23528,
+        23532,
+        23532,
+        23532
+      ],
+      "load_kilobytes": [
+        59884,
+        59844,
+        59884,
+        59848,
+        60100
+      ],
+      "parse_seconds": [
+        0.046952176,
+        0.04914138,
+        0.047750109,
+        0.054610669,
+        0.048974515
+      ],
+      "document_bytes": 37224448,
+      "bytes_per_input_byte": 1.834902829055453
+    },
+    {
+      "implementation": "sonic",
+      "corpus": "mixed-20m",
+      "mode": "memory",
+      "sha256": "90ee37a9e948ad1a11f5dc720b0c46c7e5a09d38c12fc58dcc8fa9cf98f8917e",
+      "input_bytes": 20286877,
+      "nodes": 1728957,
+      "read_kilobytes": [
+        21808,
+        21904,
+        21876,
+        21960,
+        21876
+      ],
+      "load_kilobytes": [
+        72632,
+        72624,
+        72600,
+        72548,
+        72592
+      ],
+      "parse_seconds": [
+        0.035615953,
+        0.041185519,
+        0.039385974,
+        0.038414284,
+        0.038246758
+      ],
+      "document_bytes": 51937280,
+      "bytes_per_input_byte": 2.5601417113141665
+    },
+    {
+      "implementation": "serde",
+      "corpus": "mixed-20m",
+      "mode": "memory",
+      "sha256": "90ee37a9e948ad1a11f5dc720b0c46c7e5a09d38c12fc58dcc8fa9cf98f8917e",
+      "input_bytes": 20286877,
+      "nodes": 1728957,
+      "read_kilobytes": [
+        21660,
+        21660,
+        21700,
+        21660,
+        21660
+      ],
+      "load_kilobytes": [
+        144832,
+        144816,
+        144820,
+        144600,
+        144596
+      ],
+      "parse_seconds": [
+        0.127908056,
+        0.104135934,
+        0.104928048,
+        0.105934853,
+        0.106671354
+      ],
+      "document_bytes": 126074880,
+      "bytes_per_input_byte": 6.214602671470823
+    },
+    {
+      "implementation": "nlohmann",
+      "corpus": "mixed-20m",
+      "mode": "memory",
+      "sha256": "90ee37a9e948ad1a11f5dc720b0c46c7e5a09d38c12fc58dcc8fa9cf98f8917e",
+      "input_bytes": 20286877,
+      "nodes": 1728957,
+      "read_kilobytes": [
+        23540,
+        23728,
+        23704,
+        23828,
+        23720
+      ],
+      "load_kilobytes": [
+        134536,
+        134344,
+        134600,
+        134572,
+        134536
+      ],
+      "parse_seconds": [
+        0.152700187,
+        0.163220297,
+        0.165130743,
+        0.163071423,
+        0.163163458
+      ],
+      "document_bytes": 113475584,
+      "bytes_per_input_byte": 5.593546212164642
+    },
+    {
+      "implementation": "cjson",
+      "corpus": "mixed-20m",
+      "mode": "memory",
+      "sha256": "90ee37a9e948ad1a11f5dc720b0c46c7e5a09d38c12fc58dcc8fa9cf98f8917e",
+      "input_bytes": 20286877,
+      "nodes": 1728957,
+      "read_kilobytes": [
+        21300,
+        21296,
+        21300,
+        21300,
+        21300
+      ],
+      "load_kilobytes": [
+        136756,
+        136756,
+        136244,
+        136756,
+        136756
+      ],
+      "parse_seconds": [
+        0.102732294,
+        0.102416664,
+        0.10960742,
+        0.102713874,
+        0.104204756
+      ],
+      "document_bytes": 118226944,
+      "bytes_per_input_byte": 5.827754759887389
+    },
+    {
+      "implementation": "nia",
+      "corpus": "twitter",
+      "mode": "memory",
+      "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+      "input_bytes": 631514,
+      "nodes": 27259,
+      "read_kilobytes": [
+        1536,
+        1536,
+        1536,
+        1536,
+        1536
+      ],
+      "load_kilobytes": [
+        2560,
+        2560,
+        2560,
+        2560,
+        2560
+      ],
+      "parse_seconds": [
+        0.000564814,
+        0.000534024,
+        0.000528345,
+        0.000489386,
+        0.000502594
+      ],
+      "document_bytes": 1048576,
+      "bytes_per_input_byte": 1.660416079453504
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "twitter",
+      "mode": "memory",
+      "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+      "input_bytes": 631514,
+      "nodes": 27259,
+      "read_kilobytes": [
+        2172,
+        2172,
+        2172,
+        2172,
+        2172
+      ],
+      "load_kilobytes": [
+        3184,
+        3168,
+        3168,
+        3192,
+        3156
+      ],
+      "parse_seconds": [
+        0.000475815,
+        0.000460993,
+        0.000486181,
+        0.000448832,
+        0.00044569
+      ],
+      "document_bytes": 1019904,
+      "bytes_per_input_byte": 1.6150140772809471
+    },
+    {
+      "implementation": "simdjson",
+      "corpus": "twitter",
+      "mode": "memory",
+      "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+      "input_bytes": 631514,
+      "nodes": 27259,
+      "read_kilobytes": [
+        4576,
+        4556,
+        4624,
+        4564,
+        4560
+      ],
+      "load_kilobytes": [
+        5320,
+        5548,
+        5404,
+        5300,
+        5332
+      ],
+      "parse_seconds": [
+        0.000400725,
+        0.000446266,
+        0.000365529,
+        0.000376585,
+        0.00040455
+      ],
+      "document_bytes": 790528,
+      "bytes_per_input_byte": 1.2517980599004932
+    },
+    {
+      "implementation": "rapidjson",
+      "corpus": "twitter",
+      "mode": "memory",
+      "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+      "input_bytes": 631514,
+      "nodes": 27259,
+      "read_kilobytes": [
+        4296,
+        4332,
+        4280,
+        4288,
+        4332
+      ],
+      "load_kilobytes": [
+        5100,
+        5100,
+        5100,
+        5100,
+        5096
+      ],
+      "parse_seconds": [
+        0.000958132,
+        0.000989943,
+        0.001042414,
+        0.001043063,
+        0.001141498
+      ],
+      "document_bytes": 823296,
+      "bytes_per_input_byte": 1.303686062383415
+    },
+    {
+      "implementation": "sonic",
+      "corpus": "twitter",
+      "mode": "memory",
+      "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+      "input_bytes": 631514,
+      "nodes": 27259,
+      "read_kilobytes": [
+        2748,
+        2704,
+        2612,
+        2752,
+        2608
+      ],
+      "load_kilobytes": [
+        3984,
+        4016,
+        4028,
+        3984,
+        3976
+      ],
+      "parse_seconds": [
+        0.000818529,
+        0.000835311,
+        0.000816522,
+        0.000818573,
+        0.000894666
+      ],
+      "document_bytes": 1343488,
+      "bytes_per_input_byte": 2.127408101799802
+    },
+    {
+      "implementation": "serde",
+      "corpus": "twitter",
+      "mode": "memory",
+      "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+      "input_bytes": 631514,
+      "nodes": 27259,
+      "read_kilobytes": [
+        2460,
+        2460,
+        2508,
+        2460,
+        2508
+      ],
+      "load_kilobytes": [
+        5052,
+        4820,
+        5040,
+        5048,
+        5076
+      ],
+      "parse_seconds": [
+        0.002452788,
+        0.002197825,
+        0.002226388,
+        0.00204523,
+        0.002047792
+      ],
+      "document_bytes": 2629632,
+      "bytes_per_input_byte": 4.16401219925449
+    },
+    {
+      "implementation": "nlohmann",
+      "corpus": "twitter",
+      "mode": "memory",
+      "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+      "input_bytes": 631514,
+      "nodes": 27259,
+      "read_kilobytes": [
+        4532,
+        4504,
+        4572,
+        4576,
+        4556
+      ],
+      "load_kilobytes": [
+        6320,
+        6316,
+        6340,
+        6316,
+        6316
+      ],
+      "parse_seconds": [
+        0.003250039,
+        0.003127217,
+        0.004071856,
+        0.003414696,
+        0.003538582
+      ],
+      "document_bytes": 1810432,
+      "bytes_per_input_byte": 2.8668121371814403
+    },
+    {
+      "implementation": "cjson",
+      "corpus": "twitter",
+      "mode": "memory",
+      "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+      "input_bytes": 631514,
+      "nodes": 27259,
+      "read_kilobytes": [
+        2100,
+        2100,
+        2100,
+        2100,
+        2100
+      ],
+      "load_kilobytes": [
+        4148,
+        3892,
+        3892,
+        3892,
+        3892
+      ],
+      "parse_seconds": [
+        0.001401414,
+        0.001355842,
+        0.001350122,
+        0.001329115,
+        0.001361083
+      ],
+      "document_bytes": 1835008,
+      "bytes_per_input_byte": 2.9057281390436316
+    },
+    {
+      "implementation": "nia",
+      "corpus": "citm_catalog",
+      "mode": "memory",
+      "sha256": "a73e7a883f6ea8de113dff59702975e60119b4b58d451d518a929f31c92e2059",
+      "input_bytes": 1727204,
+      "nodes": 63647,
+      "read_kilobytes": [
+        3584,
+        3584,
+        3584,
+        3584,
+        3584
+      ],
+      "load_kilobytes": [
+        6144,
+        6144,
+        6144,
+        6144,
+        6144
+      ],
+      "parse_seconds": [
+        0.001452959,
+        0.001202738,
+        0.001053484,
+        0.001010594,
+        0.001134769
+      ],
+      "document_bytes": 2621440,
+      "bytes_per_input_byte": 1.517736179397454
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "citm_catalog",
+      "mode": "memory",
+      "sha256": "a73e7a883f6ea8de113dff59702975e60119b4b58d451d518a929f31c92e2059",
+      "input_bytes": 1727204,
+      "nodes": 63647,
+      "read_kilobytes": [
+        3452,
+        3452,
+        3452,
+        3452,
+        3452
+      ],
+      "load_kilobytes": [
+        5968,
+        6004,
+        5988,
+        5964,
+        5952
+      ],
+      "parse_seconds": [
+        0.001174577,
+        0.001073298,
+        0.001007674,
+        0.001046938,
+        0.001018837
+      ],
+      "document_bytes": 2576384,
+      "bytes_per_input_byte": 1.4916500888140602
+    },
+    {
+      "implementation": "simdjson",
+      "corpus": "citm_catalog",
+      "mode": "memory",
+      "sha256": "a73e7a883f6ea8de113dff59702975e60119b4b58d451d518a929f31c92e2059",
+      "input_bytes": 1727204,
+      "nodes": 63647,
+      "read_kilobytes": [
+        5556,
+        5596,
+        5668,
+        5592,
+        5600
+      ],
+      "load_kilobytes": [
+        7332,
+        7132,
+        7204,
+        7360,
+        7140
+      ],
+      "parse_seconds": [
+        0.000687881,
+        0.000821447,
+        0.000768105,
+        0.000716328,
+        0.000738917
+      ],
+      "document_bytes": 1576960,
+      "bytes_per_input_byte": 0.9130131704187808
+    },
+    {
+      "implementation": "rapidjson",
+      "corpus": "citm_catalog",
+      "mode": "memory",
+      "sha256": "a73e7a883f6ea8de113dff59702975e60119b4b58d451d518a929f31c92e2059",
+      "input_bytes": 1727204,
+      "nodes": 63647,
+      "read_kilobytes": [
+        5356,
+        5356,
+        5356,
+        5352,
+        5316
+      ],
+      "load_kilobytes": [
+        6336,
+        6344,
+        6380,
+        6372,
+        6344
+      ],
+      "parse_seconds": [
+        0.001406392,
+        0.001239384,
+        0.001375831,
+        0.001327419,
+        0.001300076
+      ],
+      "document_bytes": 1044480,
+      "bytes_per_input_byte": 0.604723008978673
+    },
+    {
+      "implementation": "sonic",
+      "corpus": "citm_catalog",
+      "mode": "memory",
+      "sha256": "a73e7a883f6ea8de113dff59702975e60119b4b58d451d518a929f31c92e2059",
+      "input_bytes": 1727204,
+      "nodes": 63647,
+      "read_kilobytes": [
+        3728,
+        3784,
+        3624,
+        3708,
+        3700
+      ],
+      "load_kilobytes": [
+        6716,
+        6716,
+        6844,
+        6716,
+        6592
+      ],
+      "parse_seconds": [
+        0.001828845,
+        0.001591206,
+        0.001446761,
+        0.001713152,
+        0.001601368
+      ],
+      "document_bytes": 3059712,
+      "bytes_per_input_byte": 1.7714826968904658
+    },
+    {
+      "implementation": "serde",
+      "corpus": "citm_catalog",
+      "mode": "memory",
+      "sha256": "a73e7a883f6ea8de113dff59702975e60119b4b58d451d518a929f31c92e2059",
+      "input_bytes": 1727204,
+      "nodes": 63647,
+      "read_kilobytes": [
+        3708,
+        3484,
+        3484,
+        3484,
+        3532
+      ],
+      "load_kilobytes": [
+        11984,
+        11964,
+        11900,
+        11988,
+        11972
+      ],
+      "parse_seconds": [
+        0.004011276,
+        0.004515573,
+        0.004378382,
+        0.004160412,
+        0.004198155
+      ],
+      "document_bytes": 8642560,
+      "bytes_per_input_byte": 5.003786466450981
+    },
+    {
+      "implementation": "nlohmann",
+      "corpus": "citm_catalog",
+      "mode": "memory",
+      "sha256": "a73e7a883f6ea8de113dff59702975e60119b4b58d451d518a929f31c92e2059",
+      "input_bytes": 1727204,
+      "nodes": 63647,
+      "read_kilobytes": [
+        5576,
+        5528,
+        5580,
+        5512,
+        5644
+      ],
+      "load_kilobytes": [
+        9452,
+        9388,
+        9140,
+        9452,
+        9352
+      ],
+      "parse_seconds": [
+        0.006247864,
+        0.006646514,
+        0.006212545,
+        0.005734117,
+        0.005719148
+      ],
+      "document_bytes": 3952640,
+      "bytes_per_input_byte": 2.2884615829977233
+    },
+    {
+      "implementation": "cjson",
+      "corpus": "citm_catalog",
+      "mode": "memory",
+      "sha256": "a73e7a883f6ea8de113dff59702975e60119b4b58d451d518a929f31c92e2059",
+      "input_bytes": 1727204,
+      "nodes": 63647,
+      "read_kilobytes": [
+        3380,
+        3380,
+        3380,
+        3380,
+        3380
+      ],
+      "load_kilobytes": [
+        6964,
+        6964,
+        6964,
+        6964,
+        6964
+      ],
+      "parse_seconds": [
+        0.003179741,
+        0.003009183,
+        0.003030459,
+        0.003097971,
+        0.003147251
+      ],
+      "document_bytes": 3670016,
+      "bytes_per_input_byte": 2.1248306511564357
+    },
+    {
+      "implementation": "nia",
+      "corpus": "canada",
+      "mode": "memory",
+      "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+      "input_bytes": 2251051,
+      "nodes": 167187,
+      "read_kilobytes": [
+        6144,
+        6144,
+        6144,
+        6144,
+        6144
+      ],
+      "load_kilobytes": [
+        10496,
+        10496,
+        10496,
+        10496,
+        10496
+      ],
+      "parse_seconds": [
+        0.002286872,
+        0.002249446,
+        0.00220002,
+        0.002300011,
+        0.002284946
+      ],
+      "document_bytes": 4456448,
+      "bytes_per_input_byte": 1.979718806903975
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "canada",
+      "mode": "memory",
+      "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+      "input_bytes": 2251051,
+      "nodes": 167187,
+      "read_kilobytes": [
+        3964,
+        3964,
+        3960,
+        3964,
+        3964
+      ],
+      "load_kilobytes": [
+        8552,
+        8528,
+        8524,
+        8528,
+        8552
+      ],
+      "parse_seconds": [
+        0.002548557,
+        0.00260921,
+        0.002646777,
+        0.002439229,
+        0.002572246
+      ],
+      "document_bytes": 4673536,
+      "bytes_per_input_byte": 2.076157314960878
+    },
+    {
+      "implementation": "simdjson",
+      "corpus": "canada",
+      "mode": "memory",
+      "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+      "input_bytes": 2251051,
+      "nodes": 167187,
+      "read_kilobytes": [
+        6052,
+        6096,
+        6088,
+        6120,
+        6160
+      ],
+      "load_kilobytes": [
+        9892,
+        9904,
+        9992,
+        9984,
+        10024
+      ],
+      "parse_seconds": [
+        0.002492272,
+        0.002402306,
+        0.002397042,
+        0.002389799,
+        0.00224785
+      ],
+      "document_bytes": 3956736,
+      "bytes_per_input_byte": 1.7577282789239337
+    },
+    {
+      "implementation": "rapidjson",
+      "corpus": "canada",
+      "mode": "memory",
+      "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+      "input_bytes": 2251051,
+      "nodes": 167187,
+      "read_kilobytes": [
+        5868,
+        5868,
+        5868,
+        5972,
+        5832
+      ],
+      "load_kilobytes": [
+        8940,
+        8892,
+        8896,
+        8940,
+        8940
+      ],
+      "parse_seconds": [
+        0.002808808,
+        0.002911644,
+        0.003151281,
+        0.002907448,
+        0.003142163
+      ],
+      "document_bytes": 3100672,
+      "bytes_per_input_byte": 1.37743303017124
+    },
+    {
+      "implementation": "sonic",
+      "corpus": "canada",
+      "mode": "memory",
+      "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+      "input_bytes": 2251051,
+      "nodes": 167187,
+      "read_kilobytes": [
+        4284,
+        4212,
+        4288,
+        4256,
+        4244
+      ],
+      "load_kilobytes": [
+        10428,
+        10384,
+        10424,
+        10176,
+        10384
+      ],
+      "parse_seconds": [
+        0.003021605,
+        0.003120676,
+        0.002996989,
+        0.003015786,
+        0.00294544
+      ],
+      "document_bytes": 6287360,
+      "bytes_per_input_byte": 2.793077544666913
+    },
+    {
+      "implementation": "serde",
+      "corpus": "canada",
+      "mode": "memory",
+      "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+      "input_bytes": 2251051,
+      "nodes": 167187,
+      "read_kilobytes": [
+        3996,
+        4056,
+        3992,
+        3996,
+        4232
+      ],
+      "load_kilobytes": [
+        14024,
+        14008,
+        14036,
+        14020,
+        13784
+      ],
+      "parse_seconds": [
+        0.006393923,
+        0.006770533,
+        0.006581215,
+        0.006452155,
+        0.006385879
+      ],
+      "document_bytes": 10264576,
+      "bytes_per_input_byte": 4.559903796049046
+    },
+    {
+      "implementation": "nlohmann",
+      "corpus": "canada",
+      "mode": "memory",
+      "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+      "input_bytes": 2251051,
+      "nodes": 167187,
+      "read_kilobytes": [
+        6084,
+        6040,
+        6112,
+        6064,
+        6032
+      ],
+      "load_kilobytes": [
+        11436,
+        11440,
+        11496,
+        11436,
+        11436
+      ],
+      "parse_seconds": [
+        0.020298967,
+        0.021783862,
+        0.022350733,
+        0.019178205,
+        0.019052451
+      ],
+      "document_bytes": 5513216,
+      "bytes_per_input_byte": 2.449174185747013
+    },
+    {
+      "implementation": "cjson",
+      "corpus": "canada",
+      "mode": "memory",
+      "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+      "input_bytes": 2251051,
+      "nodes": 167187,
+      "read_kilobytes": [
+        3892,
+        3892,
+        3888,
+        3892,
+        3892
+      ],
+      "load_kilobytes": [
+        16948,
+        16948,
+        16948,
+        16948,
+        16948
+      ],
+      "parse_seconds": [
+        0.016170603,
+        0.016657112,
+        0.017003507,
+        0.018444673,
+        0.016624749
+      ],
+      "document_bytes": 13369344,
+      "bytes_per_input_byte": 5.939156420711925
+    }
+  ]
+}

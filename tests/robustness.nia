@@ -108,6 +108,26 @@ fun reusesCapacityAndOwnsInput() test::Error!() {
     }
     test::expectEqual(allocator.allocationAttempts(), attempts).?;
 
+    // Nor do documents nested past the parser's inline frames, whose stack
+    // moved to the document the first time, or denser ones, parsed again and
+    // again or after smaller ones.
+    let mut deep: [u8; 121] = [0; 121];
+    for i in 0..60 {
+        deep[i] = b'[';
+        deep[61 + i] = b']';
+    }
+    deep[60] = b'7';
+    let dense = b"[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]";
+    test::expect(document.parse(&mut allocator, deep).isSuccess()).?;
+    test::expect(document.parse(&mut allocator, dense).isSuccess()).?;
+    let attempts = allocator.allocationAttempts();
+    for _ in 0..100 {
+        test::expect(document.parse(&mut allocator, deep).isSuccess()).?;
+        test::expect(document.parse(&mut allocator, dense).isSuccess()).?;
+        test::expect(document.parse(&mut allocator, b"[1]").isSuccess()).?;
+    }
+    test::expectEqual(allocator.allocationAttempts(), attempts).?;
+
     test::expect(document.parse(&mut allocator, b"[").isError()).?;
     test::expect(document.value().isNull()).?;
     test::expectEqual(document.nodeCount(), 0).?;

@@ -1,66 +1,116 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 384" width="780" height="384" role="img" aria-label="Writing throughput relative to yyjson">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 520" width="780" height="520" role="img" aria-label="Writing throughput, MB/s of input">
 <style>
   .title { font: 600 16px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #18161b; }
   .note { font: 12px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #5f5a66; }
-  .label { font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #18161b; }
-  .value { font: 11px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #18161b; paint-order: stroke;
-           stroke: #ffffff; stroke-width: 3px; stroke-linejoin: round; }
-  .tick { font: 11px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #5f5a66; }
-  .grid { stroke: #ece9ef; stroke-width: 1; }
-  .baseline { stroke: #18161b; stroke-width: 1.5; stroke-dasharray: 4 3; }
-  .json { fill: #b8235a; }
-  .serde { fill: #a19aa8; }
+  .panel { font: 600 13px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #18161b; }
+  .label { font: 12px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #5f5a66; }
+  .label.json { font-weight: 600; fill: #18161b; }
+  .value { font: 11px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #5f5a66; }
+  .value.json { font-weight: 600; fill: #18161b; }
+  .bar { fill: #c9c3cf; }
+  .bar.json { fill: #b8235a; }
 </style>
-<rect x="0.5" y="0.5" width="779" height="383" rx="8" fill="#ffffff" stroke="#e4e0e8"/>
-<text class="title" x="18" y="34">Writing throughput relative to yyjson</text>
-<text class="note" x="18" y="54">Median of five processes on Linux, Intel Core i9-13900HX. Higher is faster.</text>
-<rect class="json" x="18" y="66" width="12" height="12" rx="2"/>
-<text class="value" x="35" y="76">json</text>
-<rect class="serde" x="87" y="66" width="12" height="12" rx="2"/>
-<text class="value" x="104" y="76">serde_json</text>
-<line class="baseline" x1="204" y1="72" x2="226" y2="72"/>
-<text class="value" x="232" y="76">yyjson = 1x</text>
-<line class="grid" x1="150.0" y1="88" x2="150.0" y2="344"/>
-<text class="tick" x="150.0" y="362" text-anchor="middle">0x</text>
-<line class="grid" x1="336.7" y1="88" x2="336.7" y2="344"/>
-<text class="tick" x="336.7" y="362" text-anchor="middle">0.5x</text>
-<text class="tick" x="523.3" y="362" text-anchor="middle">1x</text>
-<line class="grid" x1="710.0" y1="88" x2="710.0" y2="344"/>
-<text class="tick" x="710.0" y="362" text-anchor="middle">1.5x</text>
-<text class="label" x="138" y="108" text-anchor="end">small</text>
-<rect class="json" x="150" y="92" width="192.7" height="12" rx="2"><title>json: 0.52x yyjson</title></rect>
-<text class="value" x="347.7" y="102">0.52x</text>
-<rect class="serde" x="150" y="107" width="171.7" height="12" rx="2"><title>serde_json: 0.46x yyjson</title></rect>
-<text class="value" x="326.7" y="117">0.46x</text>
-<text class="label" x="138" y="144" text-anchor="end">records-100k</text>
-<rect class="json" x="150" y="128" width="280.0" height="12" rx="2"><title>json: 0.75x yyjson</title></rect>
-<text class="value" x="435.0" y="138">0.75x</text>
-<rect class="serde" x="150" y="143" width="172.5" height="12" rx="2"><title>serde_json: 0.46x yyjson</title></rect>
-<text class="value" x="327.5" y="153">0.46x</text>
-<text class="label" x="138" y="180" text-anchor="end">integers-100k</text>
-<rect class="json" x="150" y="164" width="186.9" height="12" rx="2"><title>json: 0.50x yyjson</title></rect>
-<text class="value" x="341.9" y="174">0.50x</text>
-<rect class="serde" x="150" y="179" width="123.3" height="12" rx="2"><title>serde_json: 0.33x yyjson</title></rect>
-<text class="value" x="278.3" y="189">0.33x</text>
-<text class="label" x="138" y="216" text-anchor="end">strings-100k</text>
-<rect class="json" x="150" y="200" width="266.9" height="12" rx="2"><title>json: 0.71x yyjson</title></rect>
-<text class="value" x="421.9" y="210">0.71x</text>
-<rect class="serde" x="150" y="215" width="35.5" height="12" rx="2"><title>serde_json: 0.10x yyjson</title></rect>
-<text class="value" x="190.5" y="225">0.10x</text>
-<text class="label" x="138" y="252" text-anchor="end">unicode-100k</text>
-<rect class="json" x="150" y="236" width="214.5" height="12" rx="2"><title>json: 0.57x yyjson</title></rect>
-<text class="value" x="369.5" y="246">0.57x</text>
-<rect class="serde" x="150" y="251" width="36.4" height="12" rx="2"><title>serde_json: 0.10x yyjson</title></rect>
-<text class="value" x="191.4" y="261">0.10x</text>
-<text class="label" x="138" y="288" text-anchor="end">escapes-100k</text>
-<rect class="json" x="150" y="272" width="314.1" height="12" rx="2"><title>json: 0.84x yyjson</title></rect>
-<text class="value" x="469.1" y="282">0.84x</text>
-<rect class="serde" x="150" y="287" width="208.7" height="12" rx="2"><title>serde_json: 0.56x yyjson</title></rect>
-<text class="value" x="363.7" y="297">0.56x</text>
-<text class="label" x="138" y="324" text-anchor="end">mixed-100k</text>
-<rect class="json" x="150" y="308" width="437.1" height="12" rx="2"><title>json: 1.17x yyjson</title></rect>
-<text class="value" x="592.1" y="318">1.17x</text>
-<rect class="serde" x="150" y="323" width="240.0" height="12" rx="2"><title>serde_json: 0.64x yyjson</title></rect>
-<text class="value" x="395.0" y="333">0.64x</text>
-<line class="baseline" x1="523.3" y1="86" x2="523.3" y2="344"/>
+<rect x="0.5" y="0.5" width="779" height="519" rx="8" fill="#ffffff" stroke="#e4e0e8"/>
+<text class="title" x="18" y="34">Writing throughput, MB/s of input</text>
+<text class="note" x="18" y="54">A parsed document as compact text into memory; median of five processes on Intel Core i9-13900HX, Linux under WSL 2. Longer is faster.</text>
+<text class="panel" x="18" y="86">twitter</text>
+<text class="label" x="114" y="109" text-anchor="end">yyjson</text>
+<rect class="bar" x="122" y="98" width="190.0" height="14" rx="2"><title>yyjson: 5,768 MB/s</title></rect>
+<text class="value" x="317.0" y="109">5,768 MB/s</text>
+<text class="label json" x="114" y="131" text-anchor="end">json</text>
+<rect class="bar json" x="122" y="120" width="154.5" height="14" rx="2"><title>json: 4,689 MB/s</title></rect>
+<text class="value json" x="281.5" y="131">4,689 MB/s</text>
+<text class="label" x="114" y="153" text-anchor="end">simdjson</text>
+<rect class="bar" x="122" y="142" width="127.0" height="14" rx="2"><title>simdjson: 3,856 MB/s</title></rect>
+<text class="value" x="254.0" y="153">3,856 MB/s</text>
+<text class="label" x="114" y="175" text-anchor="end">sonic-rs</text>
+<rect class="bar" x="122" y="164" width="91.5" height="14" rx="2"><title>sonic-rs: 2,778 MB/s</title></rect>
+<text class="value" x="218.5" y="175">2,778 MB/s</text>
+<text class="label" x="114" y="197" text-anchor="end">serde_json</text>
+<rect class="bar" x="122" y="186" width="79.5" height="14" rx="2"><title>serde_json: 2,414 MB/s</title></rect>
+<text class="value" x="206.5" y="197">2,414 MB/s</text>
+<text class="label" x="114" y="219" text-anchor="end">RapidJSON</text>
+<rect class="bar" x="122" y="208" width="52.6" height="14" rx="2"><title>RapidJSON: 1,596 MB/s</title></rect>
+<text class="value" x="179.6" y="219">1,596 MB/s</text>
+<text class="label" x="114" y="241" text-anchor="end">cJSON</text>
+<rect class="bar" x="122" y="230" width="26.6" height="14" rx="2"><title>cJSON: 808 MB/s</title></rect>
+<text class="value" x="153.6" y="241">808 MB/s</text>
+<text class="label" x="114" y="263" text-anchor="end">nlohmann/json</text>
+<rect class="bar" x="122" y="252" width="21.3" height="14" rx="2"><title>nlohmann/json: 645 MB/s</title></rect>
+<text class="value" x="148.3" y="263">645 MB/s</text>
+<text class="panel" x="404" y="86">citm_catalog</text>
+<text class="label" x="500" y="109" text-anchor="end">yyjson</text>
+<rect class="bar" x="508" y="98" width="190.0" height="14" rx="2"><title>yyjson: 10,522 MB/s</title></rect>
+<text class="value" x="703.0" y="109">10,522 MB/s</text>
+<text class="label json" x="500" y="131" text-anchor="end">json</text>
+<rect class="bar json" x="508" y="120" width="120.8" height="14" rx="2"><title>json: 6,692 MB/s</title></rect>
+<text class="value json" x="633.8" y="131">6,692 MB/s</text>
+<text class="label" x="500" y="153" text-anchor="end">simdjson</text>
+<rect class="bar" x="508" y="142" width="97.2" height="14" rx="2"><title>simdjson: 5,385 MB/s</title></rect>
+<text class="value" x="610.2" y="153">5,385 MB/s</text>
+<text class="label" x="500" y="175" text-anchor="end">serde_json</text>
+<rect class="bar" x="508" y="164" width="94.9" height="14" rx="2"><title>serde_json: 5,257 MB/s</title></rect>
+<text class="value" x="607.9" y="175">5,257 MB/s</text>
+<text class="label" x="500" y="197" text-anchor="end">RapidJSON</text>
+<rect class="bar" x="508" y="186" width="72.7" height="14" rx="2"><title>RapidJSON: 4,024 MB/s</title></rect>
+<text class="value" x="585.7" y="197">4,024 MB/s</text>
+<text class="label" x="500" y="219" text-anchor="end">sonic-rs</text>
+<rect class="bar" x="508" y="208" width="65.4" height="14" rx="2"><title>sonic-rs: 3,622 MB/s</title></rect>
+<text class="value" x="578.4" y="219">3,622 MB/s</text>
+<text class="label" x="500" y="241" text-anchor="end">nlohmann/json</text>
+<rect class="bar" x="508" y="230" width="29.7" height="14" rx="2"><title>nlohmann/json: 1,647 MB/s</title></rect>
+<text class="value" x="542.7" y="241">1,647 MB/s</text>
+<text class="label" x="500" y="263" text-anchor="end">cJSON</text>
+<rect class="bar" x="508" y="252" width="24.3" height="14" rx="2"><title>cJSON: 1,348 MB/s</title></rect>
+<text class="value" x="537.3" y="263">1,348 MB/s</text>
+<text class="panel" x="18" y="306">canada</text>
+<text class="label json" x="114" y="329" text-anchor="end">json</text>
+<rect class="bar json" x="122" y="318" width="190.0" height="14" rx="2"><title>json: 1,542 MB/s</title></rect>
+<text class="value json" x="317.0" y="329">1,542 MB/s</text>
+<text class="label" x="114" y="351" text-anchor="end">yyjson</text>
+<rect class="bar" x="122" y="340" width="167.0" height="14" rx="2"><title>yyjson: 1,355 MB/s</title></rect>
+<text class="value" x="294.0" y="351">1,355 MB/s</text>
+<text class="label" x="114" y="373" text-anchor="end">serde_json</text>
+<rect class="bar" x="122" y="362" width="141.1" height="14" rx="2"><title>serde_json: 1,145 MB/s</title></rect>
+<text class="value" x="268.1" y="373">1,145 MB/s</text>
+<text class="label" x="114" y="395" text-anchor="end">sonic-rs</text>
+<rect class="bar" x="122" y="384" width="114.2" height="14" rx="2"><title>sonic-rs: 927 MB/s</title></rect>
+<text class="value" x="241.2" y="395">927 MB/s</text>
+<text class="label" x="114" y="417" text-anchor="end">simdjson</text>
+<rect class="bar" x="122" y="406" width="104.2" height="14" rx="2"><title>simdjson: 845 MB/s</title></rect>
+<text class="value" x="231.2" y="417">845 MB/s</text>
+<text class="label" x="114" y="439" text-anchor="end">RapidJSON</text>
+<rect class="bar" x="122" y="428" width="52.0" height="14" rx="2"><title>RapidJSON: 422 MB/s</title></rect>
+<text class="value" x="179.0" y="439">422 MB/s</text>
+<text class="label" x="114" y="461" text-anchor="end">nlohmann/json</text>
+<rect class="bar" x="122" y="450" width="44.1" height="14" rx="2"><title>nlohmann/json: 358 MB/s</title></rect>
+<text class="value" x="171.1" y="461">358 MB/s</text>
+<text class="label" x="114" y="483" text-anchor="end">cJSON</text>
+<rect class="bar" x="122" y="472" width="5.3" height="14" rx="2"><title>cJSON: 43 MB/s</title></rect>
+<text class="value" x="132.3" y="483">43 MB/s</text>
+<text class="panel" x="404" y="306">mixed-100k</text>
+<text class="label json" x="500" y="329" text-anchor="end">json</text>
+<rect class="bar json" x="508" y="318" width="190.0" height="14" rx="2"><title>json: 1,883 MB/s</title></rect>
+<text class="value json" x="703.0" y="329">1,883 MB/s</text>
+<text class="label" x="500" y="351" text-anchor="end">yyjson</text>
+<rect class="bar" x="508" y="340" width="172.7" height="14" rx="2"><title>yyjson: 1,711 MB/s</title></rect>
+<text class="value" x="685.7" y="351">1,711 MB/s</text>
+<text class="label" x="500" y="373" text-anchor="end">simdjson</text>
+<rect class="bar" x="508" y="362" width="132.4" height="14" rx="2"><title>simdjson: 1,312 MB/s</title></rect>
+<text class="value" x="645.4" y="373">1,312 MB/s</text>
+<text class="label" x="500" y="395" text-anchor="end">sonic-rs</text>
+<rect class="bar" x="508" y="384" width="111.9" height="14" rx="2"><title>sonic-rs: 1,109 MB/s</title></rect>
+<text class="value" x="624.9" y="395">1,109 MB/s</text>
+<text class="label" x="500" y="417" text-anchor="end">serde_json</text>
+<rect class="bar" x="508" y="406" width="107.0" height="14" rx="2"><title>serde_json: 1,060 MB/s</title></rect>
+<text class="value" x="620.0" y="417">1,060 MB/s</text>
+<text class="label" x="500" y="439" text-anchor="end">RapidJSON</text>
+<rect class="bar" x="508" y="428" width="102.3" height="14" rx="2"><title>RapidJSON: 1,013 MB/s</title></rect>
+<text class="value" x="615.3" y="439">1,013 MB/s</text>
+<text class="label" x="500" y="461" text-anchor="end">nlohmann/json</text>
+<rect class="bar" x="508" y="450" width="35.9" height="14" rx="2"><title>nlohmann/json: 355 MB/s</title></rect>
+<text class="value" x="548.9" y="461">355 MB/s</text>
+<text class="label" x="500" y="483" text-anchor="end">cJSON</text>
+<rect class="bar" x="508" y="472" width="17.6" height="14" rx="2"><title>cJSON: 175 MB/s</title></rect>
+<text class="value" x="530.6" y="483">175 MB/s</text>
 </svg>

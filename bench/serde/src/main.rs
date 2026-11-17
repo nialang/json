@@ -11,11 +11,30 @@ fn main() {
     let args: Vec<_> = std::env::args().collect();
     assert_eq!(args.len(), 3);
     let mode = args[1].as_str();
-    assert!(matches!(mode, "parse" | "write" | "roundtrip"));
+    assert!(matches!(mode, "parse" | "write" | "roundtrip" | "read" | "load"));
     let iterations: usize = args[2].parse().unwrap();
     assert!(iterations > 0);
     let mut corpus = Vec::new();
     io::stdin().read_to_end(&mut corpus).unwrap();
+    // `read` only reads the input; `load` also parses it once and keeps the
+    // document, so the difference of their peak resident memory is what the
+    // document costs.
+    if mode == "read" {
+        println!("iterations=0 nodes=0 input_bytes={} output_bytes=0 elapsed_ns=1", corpus.len());
+        return;
+    }
+    if mode == "load" {
+        let start = Instant::now();
+        let value: Value = serde_json::from_slice(&corpus).unwrap();
+        let elapsed = start.elapsed().as_nanos();
+        println!(
+            "iterations=1 nodes={} input_bytes={} output_bytes=0 elapsed_ns={elapsed}",
+            count_nodes(&value),
+            corpus.len()
+        );
+        black_box(value);
+        return;
+    }
     let initial: Value = serde_json::from_slice(&corpus).unwrap();
     let total_nodes = count_nodes(&initial) * iterations;
     // Text is written into memory, into one buffer reused by every

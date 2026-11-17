@@ -204,6 +204,23 @@ within measurement noise of the baseline on most corpora, since the parser's
 vectors are sixteen bytes wide and its scalar loop gains little from the
 newer instructions. The library is built for the baseline of each target.
 
+**A smaller first tape.** Making room for one value per five bytes of
+input, and extrapolating when a denser document runs out, saved no memory:
+the tape pages a parse never reaches are never made resident, so peak memory
+was the same. It cost 10 percent on indented text and the citm catalog, for
+the growth's copy and the extra state in the loop.
+
+**Keeping only the content.** Parsing straight from the caller's input and
+copying only string and number bytes into the document, instead of copying
+the whole text first, cut the memory of a document by a quarter to a half on
+structured text, and parsed long strings up to half again as fast, since a
+string is then copied once rather than copied and decoded. But writing keys
+and short values became 9 to 14 percent slower, and parsing small and
+indented documents 3 to 9 percent slower, with the same instructions
+executed; placing the content at the offsets of the text did not recover
+it. The document keeps its copy of the whole text until that cost is
+understood.
+
 **Eager number conversion.** Converting numbers while parsing, as some
 libraries do, costs every parse the conversion of numbers that are never
 read. Numbers stay as text until a program asks.

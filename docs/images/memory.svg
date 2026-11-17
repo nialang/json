@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 520" width="780" height="520" role="img" aria-label="Memory of a parsed document, per byte of input">
+<style>
+  .title { font: 600 16px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #18161b; }
+  .note { font: 12px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #5f5a66; }
+  .panel { font: 600 13px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #18161b; }
+  .label { font: 12px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #5f5a66; }
+  .label.json { font-weight: 600; fill: #18161b; }
+  .value { font: 11px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #5f5a66; }
+  .value.json { font-weight: 600; fill: #18161b; }
+  .bar { fill: #c9c3cf; }
+  .bar.json { fill: #b8235a; }
+</style>
+<rect x="0.5" y="0.5" width="779" height="519" rx="8" fill="#ffffff" stroke="#e4e0e8"/>
+<text class="title" x="18" y="34">Memory of a parsed document, per byte of input</text>
+<text class="note" x="18" y="54">Peak resident memory added by parsing; median of five processes on Intel Core i9-13900HX, Linux under WSL 2. Shorter is smaller.</text>
+<text class="panel" x="18" y="86">twitter</text>
+<text class="label" x="114" y="109" text-anchor="end">simdjson</text>
+<rect class="bar" x="122" y="98" width="57.1" height="14" rx="2"><title>simdjson: 1.25x</title></rect>
+<text class="value" x="184.1" y="109">1.25x</text>
+<text class="label" x="114" y="131" text-anchor="end">RapidJSON</text>
+<rect class="bar" x="122" y="120" width="59.5" height="14" rx="2"><title>RapidJSON: 1.30x</title></rect>
+<text class="value" x="186.5" y="131">1.30x</text>
+<text class="label" x="114" y="153" text-anchor="end">yyjson</text>
+<rect class="bar" x="122" y="142" width="73.7" height="14" rx="2"><title>yyjson: 1.62x</title></rect>
+<text class="value" x="200.7" y="153">1.62x</text>
+<text class="label json" x="114" y="175" text-anchor="end">json</text>
+<rect class="bar json" x="122" y="164" width="75.8" height="14" rx="2"><title>json: 1.66x</title></rect>
+<text class="value json" x="202.8" y="175">1.66x</text>
+<text class="label" x="114" y="197" text-anchor="end">sonic-rs</text>
+<rect class="bar" x="122" y="186" width="97.1" height="14" rx="2"><title>sonic-rs: 2.13x</title></rect>
+<text class="value" x="224.1" y="197">2.13x</text>
+<text class="label" x="114" y="219" text-anchor="end">nlohmann/json</text>
+<rect class="bar" x="122" y="208" width="130.8" height="14" rx="2"><title>nlohmann/json: 2.87x</title></rect>
+<text class="value" x="257.8" y="219">2.87x</text>
+<text class="label" x="114" y="241" text-anchor="end">cJSON</text>
+<rect class="bar" x="122" y="230" width="132.6" height="14" rx="2"><title>cJSON: 2.91x</title></rect>
+<text class="value" x="259.6" y="241">2.91x</text>
+<text class="label" x="114" y="263" text-anchor="end">serde_json</text>
+<rect class="bar" x="122" y="252" width="190.0" height="14" rx="2"><title>serde_json: 4.16x</title></rect>
+<text class="value" x="317.0" y="263">4.16x</text>
+<text class="panel" x="404" y="86">citm_catalog</text>
+<text class="label" x="500" y="109" text-anchor="end">RapidJSON</text>
+<rect class="bar" x="508" y="98" width="23.0" height="14" rx="2"><title>RapidJSON: 0.60x</title></rect>
+<text class="value" x="536.0" y="109">0.60x</text>
+<text class="label" x="500" y="131" text-anchor="end">simdjson</text>
+<rect class="bar" x="508" y="120" width="34.7" height="14" rx="2"><title>simdjson: 0.91x</title></rect>
+<text class="value" x="547.7" y="131">0.91x</text>
+<text class="label" x="500" y="153" text-anchor="end">yyjson</text>
+<rect class="bar" x="508" y="142" width="56.6" height="14" rx="2"><title>yyjson: 1.49x</title></rect>
+<text class="value" x="569.6" y="153">1.49x</text>
+<text class="label json" x="500" y="175" text-anchor="end">json</text>
+<rect class="bar json" x="508" y="164" width="57.6" height="14" rx="2"><title>json: 1.52x</title></rect>
+<text class="value json" x="570.6" y="175">1.52x</text>
+<text class="label" x="500" y="197" text-anchor="end">sonic-rs</text>
+<rect class="bar" x="508" y="186" width="67.3" height="14" rx="2"><title>sonic-rs: 1.77x</title></rect>
+<text class="value" x="580.3" y="197">1.77x</text>
+<text class="label" x="500" y="219" text-anchor="end">cJSON</text>
+<rect class="bar" x="508" y="208" width="80.7" height="14" rx="2"><title>cJSON: 2.12x</title></rect>
+<text class="value" x="593.7" y="219">2.12x</text>
+<text class="label" x="500" y="241" text-anchor="end">nlohmann/json</text>
+<rect class="bar" x="508" y="230" width="86.9" height="14" rx="2"><title>nlohmann/json: 2.29x</title></rect>
+<text class="value" x="599.9" y="241">2.29x</text>
+<text class="label" x="500" y="263" text-anchor="end">serde_json</text>
+<rect class="bar" x="508" y="252" width="190.0" height="14" rx="2"><title>serde_json: 5.00x</title></rect>
+<text class="value" x="703.0" y="263">5.00x</text>
+<text class="panel" x="18" y="306">canada</text>
+<text class="label" x="114" y="329" text-anchor="end">RapidJSON</text>
+<rect class="bar" x="122" y="318" width="44.1" height="14" rx="2"><title>RapidJSON: 1.38x</title></rect>
+<text class="value" x="171.1" y="329">1.38x</text>
+<text class="label" x="114" y="351" text-anchor="end">simdjson</text>
+<rect class="bar" x="122" y="340" width="56.2" height="14" rx="2"><title>simdjson: 1.76x</title></rect>
+<text class="value" x="183.2" y="351">1.76x</text>
+<text class="label json" x="114" y="373" text-anchor="end">json</text>
+<rect class="bar json" x="122" y="362" width="63.3" height="14" rx="2"><title>json: 1.98x</title></rect>
+<text class="value json" x="190.3" y="373">1.98x</text>
+<text class="label" x="114" y="395" text-anchor="end">yyjson</text>
+<rect class="bar" x="122" y="384" width="66.4" height="14" rx="2"><title>yyjson: 2.08x</title></rect>
+<text class="value" x="193.4" y="395">2.08x</text>
+<text class="label" x="114" y="417" text-anchor="end">nlohmann/json</text>
+<rect class="bar" x="122" y="406" width="78.4" height="14" rx="2"><title>nlohmann/json: 2.45x</title></rect>
+<text class="value" x="205.4" y="417">2.45x</text>
+<text class="label" x="114" y="439" text-anchor="end">sonic-rs</text>
+<rect class="bar" x="122" y="428" width="89.4" height="14" rx="2"><title>sonic-rs: 2.79x</title></rect>
+<text class="value" x="216.4" y="439">2.79x</text>
+<text class="label" x="114" y="461" text-anchor="end">serde_json</text>
+<rect class="bar" x="122" y="450" width="145.9" height="14" rx="2"><title>serde_json: 4.56x</title></rect>
+<text class="value" x="272.9" y="461">4.56x</text>
+<text class="label" x="114" y="483" text-anchor="end">cJSON</text>
+<rect class="bar" x="122" y="472" width="190.0" height="14" rx="2"><title>cJSON: 5.94x</title></rect>
+<text class="value" x="317.0" y="483">5.94x</text>
+<text class="panel" x="404" y="306">mixed-20m</text>
+<text class="label" x="500" y="329" text-anchor="end">RapidJSON</text>
+<rect class="bar" x="508" y="318" width="56.1" height="14" rx="2"><title>RapidJSON: 1.83x</title></rect>
+<text class="value" x="569.1" y="329">1.83x</text>
+<text class="label json" x="500" y="351" text-anchor="end">json</text>
+<rect class="bar json" x="508" y="340" width="61.6" height="14" rx="2"><title>json: 2.02x</title></rect>
+<text class="value json" x="574.6" y="351">2.02x</text>
+<text class="label" x="500" y="373" text-anchor="end">yyjson</text>
+<rect class="bar" x="508" y="362" width="72.3" height="14" rx="2"><title>yyjson: 2.36x</title></rect>
+<text class="value" x="585.3" y="373">2.36x</text>
+<text class="label" x="500" y="395" text-anchor="end">simdjson</text>
+<rect class="bar" x="508" y="384" width="75.0" height="14" rx="2"><title>simdjson: 2.45x</title></rect>
+<text class="value" x="588.0" y="395">2.45x</text>
+<text class="label" x="500" y="417" text-anchor="end">sonic-rs</text>
+<rect class="bar" x="508" y="406" width="78.3" height="14" rx="2"><title>sonic-rs: 2.56x</title></rect>
+<text class="value" x="591.3" y="417">2.56x</text>
+<text class="label" x="500" y="439" text-anchor="end">nlohmann/json</text>
+<rect class="bar" x="508" y="428" width="171.0" height="14" rx="2"><title>nlohmann/json: 5.59x</title></rect>
+<text class="value" x="684.0" y="439">5.59x</text>
+<text class="label" x="500" y="461" text-anchor="end">cJSON</text>
+<rect class="bar" x="508" y="450" width="178.2" height="14" rx="2"><title>cJSON: 5.83x</title></rect>
+<text class="value" x="691.2" y="461">5.83x</text>
+<text class="label" x="500" y="483" text-anchor="end">serde_json</text>
+<rect class="bar" x="508" y="472" width="190.0" height="14" rx="2"><title>serde_json: 6.21x</title></rect>
+<text class="value" x="703.0" y="483">6.21x</text>
+</svg>

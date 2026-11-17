@@ -1,65 +1,38 @@
 /* The yyjson comparator for tools/bench.py: yyjson's ordinary strict,
  * immutable DOM, run as bench/main.nia runs the Nia library and printing the
- * same report. */
+ * same report; see bench/common/harness.h. */
+#include "../common/harness.h"
 #include "yyjson.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <time.h>
-#endif
-#ifdef __GLIBC__
-#include <malloc.h>
-#endif
-
-/* Monotonic nanoseconds, so a sample times only the measured loop. */
-static unsigned long long now_ns(void) {
-#ifdef _WIN32
-    LARGE_INTEGER count, frequency;
-    QueryPerformanceCounter(&count);
-    QueryPerformanceFrequency(&frequency);
-    return (unsigned long long)((double)count.QuadPart * 1e9 / (double)frequency.QuadPart);
-#else
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    return (unsigned long long)now.tv_sec * 1000000000ull + (unsigned long long)now.tv_nsec;
-#endif
-}
 
 int main(int argc, char **argv) {
     if (argc != 3) return 2;
     const char *mode = argv[1];
-    if (strcmp(mode, "parse") && strcmp(mode, "write") && strcmp(mode, "roundtrip")) return 2;
-    size_t iterations = (size_t)strtoull(argv[2], NULL, 10);
+    if (strcmp(mode, "parse") && strcmp(mode, "write") && strcmp(mode, "roundtrip") &&
+        strcmp(mode, "read") && strcmp(mode, "load")) return 2;
+    size_t iterations = harness_iterations(argv[2]);
     if (!iterations) return 2;
-#ifdef __GLIBC__
-    /* glibc serves a block past its mmap threshold from fresh pages and
-     * returns them on free, so a document's buffer, sized from the input,
-     * would fault in again on every iteration; that halved pretty-printed
-     * parses. Keep freed memory in the heap, as the Nia allocator does. */
-    mallopt(M_MMAP_THRESHOLD, 1 << 30);
-    mallopt(M_TRIM_THRESHOLD, 1 << 30);
-#endif
-    size_t capacity = 4096, length = 0, output_bytes = 0, nodes = 0;
-    char *input = malloc(capacity);
+    harness_keep_freed_memory();
+    size_t length = 0, output_bytes = 0;
+    char *input = harness_read_input(&length, 0);
     if (!input) return 2;
-    for (;;) {
-        if (length == capacity) {
-            capacity *= 2;
-            char *next = realloc(input, capacity);
-            if (!next) { free(input); return 2; }
-            input = next;
-        }
-        size_t count = fread(input + length, 1, capacity - length, stdin);
-        length += count;
-        if (!count) break;
+    /* `read` only reads the input; `load` also parses it once and keeps the
+     * document, so the difference of their peak resident memory is what the
+     * document costs. */
+    if (!strcmp(mode, "read")) {
+        harness_report(0, 0, length, 0, 1);
+        return 0;
     }
-    if (ferror(stdin)) { free(input); return 2; }
+    if (!strcmp(mode, "load")) {
+        unsigned long long begin = harness_now_ns();
+        yyjson_doc *doc = yyjson_read(input, length, 0);
+        unsigned long long took = harness_now_ns() - begin;
+        if (!doc) return 3;
+        harness_report(1, yyjson_doc_get_val_count(doc), length, 0, took);
+        return 0;
+    }
     yyjson_doc *initial = yyjson_read(input, length, 0);
-    if (!initial) { free(input); return 3; }
-    unsigned long long start = now_ns();
+    if (!initial) return 3;
+    unsigned long long start = harness_now_ns();
     if (!strcmp(mode, "write")) {
         for (size_t i = 0; i < iterations; ++i) {
             size_t size = 0;
@@ -84,16 +57,15 @@ int main(int argc, char **argv) {
             yyjson_doc_free(doc);
         }
     }
-    unsigned long long elapsed = now_ns() - start;
+    unsigned long long elapsed = harness_now_ns() - start;
     if (initial) yyjson_doc_free(initial);
-    /* Count once outside the repeated parse path. yyjson's val_count already
-       includes object keys as tape values, matching the shared metric. */
+    /* Count once outside the measured loop. yyjson's value count already
+     * includes object keys, as the shared metric does. */
     yyjson_doc *doc = yyjson_read(input, length, 0);
     if (!doc) return 3;
-    size_t values = yyjson_doc_get_val_count(doc);
+    size_t nodes = yyjson_doc_get_val_count(doc) * iterations;
     yyjson_doc_free(doc);
-    nodes = values * iterations;
     free(input);
-    printf("iterations=%zu nodes=%zu input_bytes=%zu output_bytes=%zu elapsed_ns=%llu\n", iterations, nodes, length, output_bytes, elapsed);
+    harness_report(iterations, nodes, length, output_bytes, elapsed);
     return 0;
 }

@@ -43,7 +43,7 @@ between the two, and either can hide a bug the other shows.
 | --- | --- |
 | allocation failures retain ownership | an allocation failure at every point of a parse leaves a consistent document that owns all it allocated |
 | failed cleanup is retryable | a failed release keeps its storage, and `deinit` can retry it |
-| capacity reuse and input ownership | storage is reused across parses, and the document does not depend on its input |
+| capacity reuse and input ownership | storage is reused across parses, of shallow, deep, and dense documents alike, without allocating again, and the document does not depend on its input |
 | exact resource boundaries | each limit at its value and just past it |
 | explicit correctly rounded floats | conversions at the edges of `f32` and `f64` |
 | subtree writing and writer failures | writing a value inside a document, and to a writer that runs out of space |

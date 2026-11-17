@@ -9,8 +9,8 @@ using root::storage::Growable;
 using root::tape;
 using root::value::Value;
 
-// Bounds on the work and memory one parse may use. The defaults accept any
-// document up to 64 MiB nested at most 128 levels.
+// Bounds on the work and memory one parse may use. The defaults accept a
+// document of up to 64 MiB and a million values, nested at most 128 levels.
 pub struct Options {
     maxDepth: usize,
     maxNodes: usize,

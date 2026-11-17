@@ -3,7 +3,11 @@
 // long the measured loop took. `tools/bench.py` drives it, and the comparators
 // in `bench/` print the same report.
 //
-//     bench <parse|reuse|write|roundtrip> <iterations> < input.json
+//     bench <parse|reuse|write|roundtrip|read|load> <iterations> < input.json
+//
+// `read` only reads the input, and `load` also parses it once and keeps the
+// document until the process exits: the difference of their peak resident
+// memory is what the document costs.
 //
 // Exit status 2 means bad arguments or input, 3 a failed parse, 4 a failed
 // write, and 5 a failed release.
@@ -26,6 +30,10 @@ enum Mode {
     Write,
     // Parses into a fresh document, writes it, and releases it.
     Roundtrip,
+    // Reads the input and nothing else.
+    Read,
+    // Parses the input once and keeps the document.
+    Load,
 }
 
 fun parseMode(name: &[u8]) ?Mode {
@@ -40,6 +48,12 @@ fun parseMode(name: &[u8]) ?Mode {
     }
     if name.equals(b"roundtrip") {
         return ?.Roundtrip;
+    }
+    if name.equals(b"read") {
+        return ?.Read;
+    }
+    if name.equals(b"load") {
+        return ?.Load;
     }
     null
 }
@@ -69,20 +83,44 @@ pub fun main(init: process::Init) process::ExitCode!() {
     defer input.deinit(allocator).?;
     let mut readBuffer: [u8; 4096] = [0; 4096];
     let mut reader = io::FileReader::stdin(readBuffer);
-    // As much input as a document accepts by default.
-    let maxInput = json::Options::init().maxInputBytes();
+    // The default limits, except that the document may hold as many values
+    // as its input can: other libraries limit neither, and the corpora for
+    // memory hold millions of values.
+    let defaults = json::Options::init();
+    let options = defaults.withMaxNodes(defaults.maxInputBytes() / 2 + 2);
+    let maxInput = options.maxInputBytes();
     if io::readToEnd(&mut reader, allocator, maxInput, &mut input) is error! {
         return process::ExitCode(2)!;
     }
 
+    if mode == .Read {
+        io::debugPrint(
+            "iterations=0 nodes=0 input_bytes={} output_bytes=0 elapsed_ns=1\n",
+            [input.len()],
+        ).?;
+        return !();
+    }
+
     let mut document = json::Document::init();
     defer document.deinit(allocator).?;
+    if mode == .Load {
+        let start = time::Instant::now();
+        if document.parseWith(allocator, input.asSlice(), options) is error! {
+            return process::ExitCode(3)!;
+        }
+        let elapsed = start.elapsed();
+        io::debugPrint(
+            "iterations=1 nodes={} input_bytes={} output_bytes=0 elapsed_ns={}\n",
+            [document.nodeCount(), input.len(), elapsed.nanos()],
+        ).?;
+        return !();
+    }
     let mut totalNodes: usize = 0;
     let mut outputBytes: usize = 0;
     // Text is written into memory, as the comparators write it: a buffer
     // sized once from a first, untimed write and reused by every iteration.
     let mut sizing = io::DiscardingWriter::init();
-    if document.parse(allocator, input.asSlice()) is error! {
+    if document.parseWith(allocator, input.asSlice(), options) is error! {
         return process::ExitCode(3)!;
     }
     let first = document.value().okOr(process::ExitCode(3)).?;
@@ -103,7 +141,7 @@ pub fun main(init: process::Init) process::ExitCode!() {
     let start = time::Instant::now();
     for _ in 0..iterations {
         if mode != .Write {
-            if document.parse(allocator, input.asSlice()) is error! {
+            if document.parseWith(allocator, input.asSlice(), options) is error! {
                 return process::ExitCode(3)!;
             }
         }
