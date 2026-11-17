@@ -77,6 +77,17 @@ Intel Core i9-13900HX under Linux 6.18 (WSL 2); the Nia compiler at
 nialang/nia `890ec5e62`, yyjson 0.12.0 built with clang 23.1.2, serde_json
 1.0.151 with rustc 1.98.1.
 
+Every sample of this run is in [bench/results.json](../bench/results.json).
+The charts in the README are drawn from it:
+
+```sh
+python tools/charts.py bench/results.json docs/images \
+    --note "Median of five processes on Linux, Intel Core i9-13900HX. Higher is faster."
+```
+
+When the results are measured again, replace that file, the tables here and
+in the README, and the charts together.
+
 ### Parsing
 
 | Corpus | json | yyjson | serde_json |

@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 528" width="780" height="528" role="img" aria-label="Parsing throughput relative to yyjson">
+<style>
+  .title { font: 600 16px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #ece9ef; }
+  .note { font: 12px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #a9a3b0; }
+  .label { font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #ece9ef; }
+  .value { font: 11px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #ece9ef; paint-order: stroke;
+           stroke: #18161b; stroke-width: 3px; stroke-linejoin: round; }
+  .tick { font: 11px system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #a9a3b0; }
+  .grid { stroke: #2e2a33; stroke-width: 1; }
+  .baseline { stroke: #ece9ef; stroke-width: 1.5; stroke-dasharray: 4 3; }
+  .json { fill: #f0709c; }
+  .serde { fill: #6f6876; }
+</style>
+<rect x="0.5" y="0.5" width="779" height="527" rx="8" fill="#18161b" stroke="#2e2a33"/>
+<text class="title" x="18" y="34">Parsing throughput relative to yyjson</text>
+<text class="note" x="18" y="54">Median of five processes on Linux, Intel Core i9-13900HX. Higher is faster.</text>
+<rect class="json" x="18" y="66" width="12" height="12" rx="2"/>
+<text class="value" x="35" y="76">json</text>
+<rect class="serde" x="87" y="66" width="12" height="12" rx="2"/>
+<text class="value" x="104" y="76">serde_json</text>
+<line class="baseline" x1="204" y1="72" x2="226" y2="72"/>
+<text class="value" x="232" y="76">yyjson = 1x</text>
+<line class="grid" x1="150.0" y1="88" x2="150.0" y2="488"/>
+<text class="tick" x="150.0" y="506" text-anchor="middle">0x</text>
+<line class="grid" x1="290.0" y1="88" x2="290.0" y2="488"/>
+<text class="tick" x="290.0" y="506" text-anchor="middle">0.5x</text>
+<text class="tick" x="430.0" y="506" text-anchor="middle">1x</text>
+<line class="grid" x1="570.0" y1="88" x2="570.0" y2="488"/>
+<text class="tick" x="570.0" y="506" text-anchor="middle">1.5x</text>
+<line class="grid" x1="710.0" y1="88" x2="710.0" y2="488"/>
+<text class="tick" x="710.0" y="506" text-anchor="middle">2x</text>
+<text class="label" x="138" y="108" text-anchor="end">small</text>
+<rect class="json" x="150" y="92" width="175.4" height="12" rx="2"><title>json: 0.63x yyjson</title></rect>
+<text class="value" x="330.4" y="102">0.63x</text>
+<rect class="serde" x="150" y="107" width="43.6" height="12" rx="2"><title>serde_json: 0.16x yyjson</title></rect>
+<text class="value" x="198.6" y="117">0.16x</text>
+<text class="label" x="138" y="144" text-anchor="end">records-100k</text>
+<rect class="json" x="150" y="128" width="199.8" height="12" rx="2"><title>json: 0.71x yyjson</title></rect>
+<text class="value" x="354.8" y="138">0.71x</text>
+<rect class="serde" x="150" y="143" width="25.4" height="12" rx="2"><title>serde_json: 0.09x yyjson</title></rect>
+<text class="value" x="180.4" y="153">0.09x</text>
+<text class="label" x="138" y="180" text-anchor="end">records-2m</text>
+<rect class="json" x="150" y="164" width="213.4" height="12" rx="2"><title>json: 0.76x yyjson</title></rect>
+<text class="value" x="368.4" y="174">0.76x</text>
+<rect class="serde" x="150" y="179" width="21.9" height="12" rx="2"><title>serde_json: 0.08x yyjson</title></rect>
+<text class="value" x="176.9" y="189">0.08x</text>
+<text class="label" x="138" y="216" text-anchor="end">integers-100k</text>
+<rect class="json" x="150" y="200" width="215.7" height="12" rx="2"><title>json: 0.77x yyjson</title></rect>
+<text class="value" x="370.7" y="210">0.77x</text>
+<rect class="serde" x="150" y="215" width="78.4" height="12" rx="2"><title>serde_json: 0.28x yyjson</title></rect>
+<text class="value" x="233.4" y="225">0.28x</text>
+<text class="label" x="138" y="252" text-anchor="end">strings-100k</text>
+<rect class="json" x="150" y="236" width="477.4" height="12" rx="2"><title>json: 1.71x yyjson</title></rect>
+<text class="value" x="632.4" y="246">1.71x</text>
+<rect class="serde" x="150" y="251" width="287.4" height="12" rx="2"><title>serde_json: 1.03x yyjson</title></rect>
+<text class="value" x="442.4" y="261">1.03x</text>
+<text class="label" x="138" y="288" text-anchor="end">unicode-100k</text>
+<rect class="json" x="150" y="272" width="182.8" height="12" rx="2"><title>json: 0.65x yyjson</title></rect>
+<text class="value" x="337.8" y="282">0.65x</text>
+<rect class="serde" x="150" y="287" width="112.9" height="12" rx="2"><title>serde_json: 0.40x yyjson</title></rect>
+<text class="value" x="267.9" y="297">0.40x</text>
+<text class="label" x="138" y="324" text-anchor="end">escapes-100k</text>
+<rect class="json" x="150" y="308" width="154.7" height="12" rx="2"><title>json: 0.55x yyjson</title></rect>
+<text class="value" x="309.7" y="318">0.55x</text>
+<rect class="serde" x="150" y="323" width="50.8" height="12" rx="2"><title>serde_json: 0.18x yyjson</title></rect>
+<text class="value" x="205.8" y="333">0.18x</text>
+<text class="label" x="138" y="360" text-anchor="end">records-pretty</text>
+<rect class="json" x="150" y="344" width="194.5" height="12" rx="2"><title>json: 0.69x yyjson</title></rect>
+<text class="value" x="349.5" y="354">0.69x</text>
+<rect class="serde" x="150" y="359" width="29.8" height="12" rx="2"><title>serde_json: 0.11x yyjson</title></rect>
+<text class="value" x="184.8" y="369">0.11x</text>
+<text class="label" x="138" y="396" text-anchor="end">records-tabs</text>
+<rect class="json" x="150" y="380" width="263.9" height="12" rx="2"><title>json: 0.94x yyjson</title></rect>
+<text class="value" x="418.9" y="390">0.94x</text>
+<rect class="serde" x="150" y="395" width="45.1" height="12" rx="2"><title>serde_json: 0.16x yyjson</title></rect>
+<text class="value" x="200.1" y="405">0.16x</text>
+<text class="label" x="138" y="432" text-anchor="end">records-crlf</text>
+<rect class="json" x="150" y="416" width="267.5" height="12" rx="2"><title>json: 0.96x yyjson</title></rect>
+<text class="value" x="422.5" y="426">0.96x</text>
+<rect class="serde" x="150" y="431" width="47.2" height="12" rx="2"><title>serde_json: 0.17x yyjson</title></rect>
+<text class="value" x="202.2" y="441">0.17x</text>
+<text class="label" x="138" y="468" text-anchor="end">mixed-100k</text>
+<rect class="json" x="150" y="452" width="185.0" height="12" rx="2"><title>json: 0.66x yyjson</title></rect>
+<text class="value" x="340.0" y="462">0.66x</text>
+<rect class="serde" x="150" y="467" width="32.9" height="12" rx="2"><title>serde_json: 0.12x yyjson</title></rect>
+<text class="value" x="187.9" y="477">0.12x</text>
+<line class="baseline" x1="430.0" y1="86" x2="430.0" y2="488"/>
+</svg>

@@ -1,0 +1,3130 @@
+{
+  "schema": 2,
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "python": "3.12.3",
+  "repeat": 5,
+  "method": "fresh process per sample; binary stdin; each harness times only its measured loop with a monotonic clock (elapsed_ns); counting sink",
+  "samples": [
+    {
+      "implementation": "nia",
+      "corpus": "small",
+      "mode": "parse",
+      "sha256": "65b7d98792af565bfa2f2d9e4dbaf60c688e4d7638cc41793dccd9f99249bf88",
+      "seconds": [
+        0.030205245,
+        0.030164045,
+        0.030894415,
+        0.032257014,
+        0.030124351
+      ],
+      "process_seconds": [
+        0.030608462000003556,
+        0.03063362599999664,
+        0.03126864099999693,
+        0.03272939799998653,
+        0.0306222650000052
+      ],
+      "median_seconds": 0.030205245,
+      "mb_per_second": 1059.4181573432031,
+      "iterations": 214765,
+      "nodes": 4295300,
+      "input_bytes": 149,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "serde",
+      "corpus": "small",
+      "mode": "parse",
+      "sha256": "65b7d98792af565bfa2f2d9e4dbaf60c688e4d7638cc41793dccd9f99249bf88",
+      "seconds": [
+        0.123203874,
+        0.121114799,
+        0.126201382,
+        0.12145498,
+        0.121017678
+      ],
+      "process_seconds": [
+        0.12395152899998152,
+        0.12186209600000097,
+        0.12706877300001906,
+        0.12226911800001972,
+        0.12196152899997514
+      ],
+      "median_seconds": 0.12145498,
+      "mb_per_second": 263.47198772746907,
+      "iterations": 214765,
+      "nodes": 4295300,
+      "input_bytes": 149,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "small",
+      "mode": "parse",
+      "sha256": "65b7d98792af565bfa2f2d9e4dbaf60c688e4d7638cc41793dccd9f99249bf88",
+      "seconds": [
+        0.019575332,
+        0.019098314,
+        0.016699896,
+        0.01870968,
+        0.018920839
+      ],
+      "process_seconds": [
+        0.02007122099999492,
+        0.019636243999997305,
+        0.017206156000014516,
+        0.019172465999986343,
+        0.019398550000005343
+      ],
+      "median_seconds": 0.018920839,
+      "mb_per_second": 1691.2561329864918,
+      "iterations": 214765,
+      "nodes": 4295300,
+      "input_bytes": 149,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "small",
+      "mode": "reuse",
+      "sha256": "65b7d98792af565bfa2f2d9e4dbaf60c688e4d7638cc41793dccd9f99249bf88",
+      "seconds": [
+        0.021145978,
+        0.023365342,
+        0.02444273,
+        0.021523354,
+        0.022363661
+      ],
+      "process_seconds": [
+        0.021460412000010365,
+        0.023714489000013828,
+        0.024882571999995662,
+        0.021870025999987774,
+        0.022647669000008364
+      ],
+      "median_seconds": 0.022363661,
+      "mb_per_second": 1430.8920619034602,
+      "iterations": 214765,
+      "nodes": 4295300,
+      "input_bytes": 149,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "small",
+      "mode": "write",
+      "sha256": "65b7d98792af565bfa2f2d9e4dbaf60c688e4d7638cc41793dccd9f99249bf88",
+      "seconds": [
+        0.027877051,
+        0.024901693,
+        0.026380496,
+        0.025856896,
+        0.026276211
+      ],
+      "process_seconds": [
+        0.0282635510000091,
+        0.025223299999993287,
+        0.02672229899999934,
+        0.026208583999988377,
+        0.0267560309999908
+      ],
+      "median_seconds": 0.026276211,
+      "mb_per_second": 1217.8310259420584,
+      "iterations": 214765,
+      "nodes": 4295300,
+      "input_bytes": 149,
+      "output_bytes": 31999985
+    },
+    {
+      "implementation": "serde",
+      "corpus": "small",
+      "mode": "write",
+      "sha256": "65b7d98792af565bfa2f2d9e4dbaf60c688e4d7638cc41793dccd9f99249bf88",
+      "seconds": [
+        0.031759699,
+        0.031059085,
+        0.029485788,
+        0.026021016,
+        0.027452161
+      ],
+      "process_seconds": [
+        0.03253527800001166,
+        0.03177266800000211,
+        0.030229122999998026,
+        0.026697931999990487,
+        0.028054376999989472
+      ],
+      "median_seconds": 0.029485788,
+      "mb_per_second": 1085.2680959382872,
+      "iterations": 214765,
+      "nodes": 4295300,
+      "input_bytes": 149,
+      "output_bytes": 32644280
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "small",
+      "mode": "write",
+      "sha256": "65b7d98792af565bfa2f2d9e4dbaf60c688e4d7638cc41793dccd9f99249bf88",
+      "seconds": [
+        0.014955836,
+        0.01356413,
+        0.013055467,
+        0.013302808,
+        0.013841802
+      ],
+      "process_seconds": [
+        0.015425916999987521,
+        0.014007809999981191,
+        0.013489165999999386,
+        0.013812035999990258,
+        0.014355991000002177
+      ],
+      "median_seconds": 0.01356413,
+      "mb_per_second": 2359.162364265161,
+      "iterations": 214765,
+      "nodes": 4295300,
+      "input_bytes": 149,
+      "output_bytes": 31999985
+    },
+    {
+      "implementation": "nia",
+      "corpus": "small",
+      "mode": "roundtrip",
+      "sha256": "65b7d98792af565bfa2f2d9e4dbaf60c688e4d7638cc41793dccd9f99249bf88",
+      "seconds": [
+        0.059089687,
+        0.058016349,
+        0.061568104,
+        0.064397592,
+        0.061987909
+      ],
+      "process_seconds": [
+        0.05943204600001195,
+        0.05837226399998485,
+        0.06207709800000316,
+        0.06485072899999977,
+        0.06244538500001795
+      ],
+      "median_seconds": 0.061568104,
+      "mb_per_second": 519.7493981623992,
+      "iterations": 214765,
+      "nodes": 4295300,
+      "input_bytes": 149,
+      "output_bytes": 31999985
+    },
+    {
+      "implementation": "serde",
+      "corpus": "small",
+      "mode": "roundtrip",
+      "sha256": "65b7d98792af565bfa2f2d9e4dbaf60c688e4d7638cc41793dccd9f99249bf88",
+      "seconds": [
+        0.145383564,
+        0.15163997,
+        0.155011358,
+        0.151956385,
+        0.150787441
+      ],
+      "process_seconds": [
+        0.14618193000001156,
+        0.15249954400002252,
+        0.15582219600000258,
+        0.15272935499999107,
+        0.1515879049999853
+      ],
+      "median_seconds": 0.15163997,
+      "mb_per_second": 211.0260573119343,
+      "iterations": 214765,
+      "nodes": 4295300,
+      "input_bytes": 149,
+      "output_bytes": 32644280
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "small",
+      "mode": "roundtrip",
+      "sha256": "65b7d98792af565bfa2f2d9e4dbaf60c688e4d7638cc41793dccd9f99249bf88",
+      "seconds": [
+        0.030122186,
+        0.030111417,
+        0.032742288,
+        0.031886865,
+        0.029957258
+      ],
+      "process_seconds": [
+        0.030682462000015676,
+        0.030620404000018198,
+        0.033359458000006725,
+        0.03246988300000453,
+        0.0306039890000136
+      ],
+      "median_seconds": 0.030122186,
+      "mb_per_second": 1062.3393999359807,
+      "iterations": 214765,
+      "nodes": 4295300,
+      "input_bytes": 149,
+      "output_bytes": 31999985
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-1k",
+      "mode": "parse",
+      "sha256": "2b6823ef9b5a455efb8569215e809b4f871e0940f01edf9f39535bc315ac69fe",
+      "seconds": [
+        0.026152739,
+        0.025247374,
+        0.025129096,
+        0.02621013,
+        0.025267609
+      ],
+      "process_seconds": [
+        0.026473285000008673,
+        0.02555228400001397,
+        0.025540116000001944,
+        0.026730123999982425,
+        0.025702931000012086
+      ],
+      "median_seconds": 0.025267609,
+      "mb_per_second": 1266.4314617184396,
+      "iterations": 38415,
+      "nodes": 5877495,
+      "input_bytes": 833,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-1k",
+      "mode": "parse",
+      "sha256": "2b6823ef9b5a455efb8569215e809b4f871e0940f01edf9f39535bc315ac69fe",
+      "seconds": [
+        0.149961015,
+        0.152650757,
+        0.155361437,
+        0.162035849,
+        0.166553916
+      ],
+      "process_seconds": [
+        0.15080152800001656,
+        0.15340657900000565,
+        0.156148241000011,
+        0.16280428400000346,
+        0.16740328599999543
+      ],
+      "median_seconds": 0.155361437,
+      "mb_per_second": 205.96935518818614,
+      "iterations": 38415,
+      "nodes": 5877495,
+      "input_bytes": 833,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-1k",
+      "mode": "parse",
+      "sha256": "2b6823ef9b5a455efb8569215e809b4f871e0940f01edf9f39535bc315ac69fe",
+      "seconds": [
+        0.018540598,
+        0.018929411,
+        0.017380021,
+        0.019445398,
+        0.017568823
+      ],
+      "process_seconds": [
+        0.01921834899999908,
+        0.019497449999988703,
+        0.017930970000008983,
+        0.020198397999990902,
+        0.018081646000013052
+      ],
+      "median_seconds": 0.018540598,
+      "mb_per_second": 1725.9257225683878,
+      "iterations": 38415,
+      "nodes": 5877495,
+      "input_bytes": 833,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-1k",
+      "mode": "reuse",
+      "sha256": "2b6823ef9b5a455efb8569215e809b4f871e0940f01edf9f39535bc315ac69fe",
+      "seconds": [
+        0.023737234,
+        0.02412829,
+        0.024250264,
+        0.024265923,
+        0.02618548
+      ],
+      "process_seconds": [
+        0.02417023399999607,
+        0.024544741999989128,
+        0.024611415999999053,
+        0.024633773999994446,
+        0.02650470500000779
+      ],
+      "median_seconds": 0.024250264,
+      "mb_per_second": 1319.560686019748,
+      "iterations": 38415,
+      "nodes": 5877495,
+      "input_bytes": 833,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-1k",
+      "mode": "write",
+      "sha256": "2b6823ef9b5a455efb8569215e809b4f871e0940f01edf9f39535bc315ac69fe",
+      "seconds": [
+        0.023449706,
+        0.024634137,
+        0.024541239,
+        0.024167751,
+        0.024051112
+      ],
+      "process_seconds": [
+        0.023835160000004407,
+        0.024988421000017524,
+        0.02498830399997587,
+        0.024567379000018263,
+        0.024449473000004218
+      ],
+      "median_seconds": 0.024167751,
+      "mb_per_second": 1324.0659008775785,
+      "iterations": 38415,
+      "nodes": 5877495,
+      "input_bytes": 833,
+      "output_bytes": 31999695
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-1k",
+      "mode": "write",
+      "sha256": "2b6823ef9b5a455efb8569215e809b4f871e0940f01edf9f39535bc315ac69fe",
+      "seconds": [
+        0.034920121,
+        0.035644729,
+        0.040699963,
+        0.034489323,
+        0.034451187
+      ],
+      "process_seconds": [
+        0.0356225269999868,
+        0.03636187600000085,
+        0.041393145000000686,
+        0.035223333000004686,
+        0.03514138399998501
+      ],
+      "median_seconds": 0.034920121,
+      "mb_per_second": 916.3683882996855,
+      "iterations": 38415,
+      "nodes": 5877495,
+      "input_bytes": 833,
+      "output_bytes": 31999695
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-1k",
+      "mode": "write",
+      "sha256": "2b6823ef9b5a455efb8569215e809b4f871e0940f01edf9f39535bc315ac69fe",
+      "seconds": [
+        0.015814999,
+        0.016363368,
+        0.015373183,
+        0.015643389,
+        0.016795376
+      ],
+      "process_seconds": [
+        0.01637277399998993,
+        0.016921281999998428,
+        0.015922791000008374,
+        0.01617972200000395,
+        0.017262308999988818
+      ],
+      "median_seconds": 0.015814999,
+      "mb_per_second": 2023.3763530430826,
+      "iterations": 38415,
+      "nodes": 5877495,
+      "input_bytes": 833,
+      "output_bytes": 31999695
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-1k",
+      "mode": "roundtrip",
+      "sha256": "2b6823ef9b5a455efb8569215e809b4f871e0940f01edf9f39535bc315ac69fe",
+      "seconds": [
+        0.050469576,
+        0.051080204,
+        0.052678155,
+        0.049765319,
+        0.054627121
+      ],
+      "process_seconds": [
+        0.05092348700000571,
+        0.05151497700001073,
+        0.05312256499999535,
+        0.050234933000012916,
+        0.05506791100000896
+      ],
+      "median_seconds": 0.051080204,
+      "mb_per_second": 626.4598121025516,
+      "iterations": 38415,
+      "nodes": 5877495,
+      "input_bytes": 833,
+      "output_bytes": 31999695
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-1k",
+      "mode": "roundtrip",
+      "sha256": "2b6823ef9b5a455efb8569215e809b4f871e0940f01edf9f39535bc315ac69fe",
+      "seconds": [
+        0.19784089,
+        0.192319935,
+        0.195444316,
+        0.197466706,
+        0.201725153
+      ],
+      "process_seconds": [
+        0.1986989100000187,
+        0.19323602699998332,
+        0.19632208699999865,
+        0.19840531500000225,
+        0.20256414899998276
+      ],
+      "median_seconds": 0.197466706,
+      "mb_per_second": 162.0510902734155,
+      "iterations": 38415,
+      "nodes": 5877495,
+      "input_bytes": 833,
+      "output_bytes": 31999695
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-1k",
+      "mode": "roundtrip",
+      "sha256": "2b6823ef9b5a455efb8569215e809b4f871e0940f01edf9f39535bc315ac69fe",
+      "seconds": [
+        0.034542576,
+        0.034434961,
+        0.034613697,
+        0.034998438,
+        0.034710714
+      ],
+      "process_seconds": [
+        0.035112863999984256,
+        0.03506526499998586,
+        0.03522185200000649,
+        0.035617029999997385,
+        0.035295181999998704
+      ],
+      "median_seconds": 0.034613697,
+      "mb_per_second": 924.4807048492971,
+      "iterations": 38415,
+      "nodes": 5877495,
+      "input_bytes": 833,
+      "output_bytes": 31999695
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-100k",
+      "mode": "parse",
+      "sha256": "aa6134b8d312b147425fc4fe54b90044bc67d841cdfc2cd21b1591f4347611d2",
+      "seconds": [
+        0.023468271,
+        0.023347292,
+        0.024863776,
+        0.024133681,
+        0.023928523
+      ],
+      "process_seconds": [
+        0.02446412399999076,
+        0.02431763600000636,
+        0.02591675700000451,
+        0.02519527200001903,
+        0.024863052000000607
+      ],
+      "median_seconds": 0.023928523,
+      "mb_per_second": 1335.192481374634,
+      "iterations": 384,
+      "nodes": 5837184,
+      "input_bytes": 83201,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-100k",
+      "mode": "parse",
+      "sha256": "aa6134b8d312b147425fc4fe54b90044bc67d841cdfc2cd21b1591f4347611d2",
+      "seconds": [
+        0.187886271,
+        0.185676923,
+        0.190271633,
+        0.190807395,
+        0.187186546
+      ],
+      "process_seconds": [
+        0.18971026699998106,
+        0.18751172500000735,
+        0.19198481099999753,
+        0.19270485600000598,
+        0.18889768099998605
+      ],
+      "median_seconds": 0.187886271,
+      "mb_per_second": 170.04533556366127,
+      "iterations": 384,
+      "nodes": 5837184,
+      "input_bytes": 83201,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-100k",
+      "mode": "parse",
+      "sha256": "aa6134b8d312b147425fc4fe54b90044bc67d841cdfc2cd21b1591f4347611d2",
+      "seconds": [
+        0.017807811,
+        0.017382153,
+        0.017073706,
+        0.016869834,
+        0.015167413
+      ],
+      "process_seconds": [
+        0.018735149999997702,
+        0.018243904000001976,
+        0.017876551000000518,
+        0.017685980000010204,
+        0.01598977300000115
+      ],
+      "median_seconds": 0.017073706,
+      "mb_per_second": 1871.2506821893264,
+      "iterations": 384,
+      "nodes": 5837184,
+      "input_bytes": 83201,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-100k",
+      "mode": "reuse",
+      "sha256": "aa6134b8d312b147425fc4fe54b90044bc67d841cdfc2cd21b1591f4347611d2",
+      "seconds": [
+        0.02386023,
+        0.024843719,
+        0.023444572,
+        0.023823762,
+        0.022595327
+      ],
+      "process_seconds": [
+        0.02485696299999063,
+        0.025716369999997823,
+        0.02437078200000542,
+        0.02483820200001219,
+        0.023472585000007484
+      ],
+      "median_seconds": 0.023823762,
+      "mb_per_second": 1341.063766503376,
+      "iterations": 384,
+      "nodes": 5837184,
+      "input_bytes": 83201,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-100k",
+      "mode": "write",
+      "sha256": "aa6134b8d312b147425fc4fe54b90044bc67d841cdfc2cd21b1591f4347611d2",
+      "seconds": [
+        0.019938465,
+        0.020746502,
+        0.021129953,
+        0.023467634,
+        0.022374248
+      ],
+      "process_seconds": [
+        0.020855044000001044,
+        0.02171375399998965,
+        0.02201037000000383,
+        0.024405537000006916,
+        0.023324636000012333
+      ],
+      "median_seconds": 0.021129953,
+      "mb_per_second": 1512.032894725322,
+      "iterations": 384,
+      "nodes": 5837184,
+      "input_bytes": 83201,
+      "output_bytes": 31949184
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-100k",
+      "mode": "write",
+      "sha256": "aa6134b8d312b147425fc4fe54b90044bc67d841cdfc2cd21b1591f4347611d2",
+      "seconds": [
+        0.035977979,
+        0.036533839,
+        0.033773016,
+        0.033892393,
+        0.034310152
+      ],
+      "process_seconds": [
+        0.03751844999999321,
+        0.03825513600000363,
+        0.03547340500000473,
+        0.03544037399998956,
+        0.03595184099998505
+      ],
+      "median_seconds": 0.034310152,
+      "mb_per_second": 931.1874806034087,
+      "iterations": 384,
+      "nodes": 5837184,
+      "input_bytes": 83201,
+      "output_bytes": 31949184
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-100k",
+      "mode": "write",
+      "sha256": "aa6134b8d312b147425fc4fe54b90044bc67d841cdfc2cd21b1591f4347611d2",
+      "seconds": [
+        0.016249039,
+        0.015848717,
+        0.015857331,
+        0.015781838,
+        0.013720717
+      ],
+      "process_seconds": [
+        0.01707750200000646,
+        0.016598365999982434,
+        0.016517899999996644,
+        0.016557741000013948,
+        0.014677059000007375
+      ],
+      "median_seconds": 0.015848717,
+      "mb_per_second": 2015.8845665551353,
+      "iterations": 384,
+      "nodes": 5837184,
+      "input_bytes": 83201,
+      "output_bytes": 31949184
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-100k",
+      "mode": "roundtrip",
+      "sha256": "aa6134b8d312b147425fc4fe54b90044bc67d841cdfc2cd21b1591f4347611d2",
+      "seconds": [
+        0.044354084,
+        0.045663448,
+        0.046673261,
+        0.043366735,
+        0.046180096
+      ],
+      "process_seconds": [
+        0.045393826999998055,
+        0.046674018999993905,
+        0.04771767799999793,
+        0.0444797650000055,
+        0.04716552599998636
+      ],
+      "median_seconds": 0.045663448,
+      "mb_per_second": 699.666481602528,
+      "iterations": 384,
+      "nodes": 5837184,
+      "input_bytes": 83201,
+      "output_bytes": 31949184
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-100k",
+      "mode": "roundtrip",
+      "sha256": "aa6134b8d312b147425fc4fe54b90044bc67d841cdfc2cd21b1591f4347611d2",
+      "seconds": [
+        0.225815028,
+        0.222043053,
+        0.226924446,
+        0.233091423,
+        0.235841275
+      ],
+      "process_seconds": [
+        0.22762604599998326,
+        0.22394586999999433,
+        0.22868365100001142,
+        0.23496624800000632,
+        0.23785528499999486
+      ],
+      "median_seconds": 0.226924446,
+      "mb_per_second": 140.79216480713586,
+      "iterations": 384,
+      "nodes": 5837184,
+      "input_bytes": 83201,
+      "output_bytes": 31949184
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-100k",
+      "mode": "roundtrip",
+      "sha256": "aa6134b8d312b147425fc4fe54b90044bc67d841cdfc2cd21b1591f4347611d2",
+      "seconds": [
+        0.031394009,
+        0.030769651,
+        0.034583712,
+        0.031645913,
+        0.030658044
+      ],
+      "process_seconds": [
+        0.03228938099999823,
+        0.03155438799998933,
+        0.035832459999994626,
+        0.03254420799999025,
+        0.03153714300000843
+      ],
+      "median_seconds": 0.031394009,
+      "mb_per_second": 1017.6841065440225,
+      "iterations": 384,
+      "nodes": 5837184,
+      "input_bytes": 83201,
+      "output_bytes": 31949184
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-2m",
+      "mode": "parse",
+      "sha256": "6215b122f521eff787c72b8745b704e2aebec1afee5f8de993078c194b49ed7b",
+      "seconds": [
+        0.023229381,
+        0.022218933,
+        0.022436467,
+        0.023541324,
+        0.024566369
+      ],
+      "process_seconds": [
+        0.10556636199999048,
+        0.10410981799998353,
+        0.10498781399999757,
+        0.10777064399999858,
+        0.10960897900000077
+      ],
+      "median_seconds": 0.023229381,
+      "mb_per_second": 1361.03579342041,
+      "iterations": 19,
+      "nodes": 5776019,
+      "input_bytes": 1664001,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-2m",
+      "mode": "parse",
+      "sha256": "6215b122f521eff787c72b8745b704e2aebec1afee5f8de993078c194b49ed7b",
+      "seconds": [
+        0.235675601,
+        0.229830817,
+        0.226610944,
+        0.225949444,
+        0.223923946
+      ],
+      "process_seconds": [
+        0.25547838899998965,
+        0.2481858159999888,
+        0.24568752999999788,
+        0.24481447599998774,
+        0.24307609600001
+      ],
+      "median_seconds": 0.226610944,
+      "mb_per_second": 139.51673490226491,
+      "iterations": 19,
+      "nodes": 5776019,
+      "input_bytes": 1664001,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-2m",
+      "mode": "parse",
+      "sha256": "6215b122f521eff787c72b8745b704e2aebec1afee5f8de993078c194b49ed7b",
+      "seconds": [
+        0.017990116,
+        0.01770276,
+        0.018412774,
+        0.017633654,
+        0.015479409
+      ],
+      "process_seconds": [
+        0.02443753700001139,
+        0.02450443399999358,
+        0.024804945000028056,
+        0.023656457000015507,
+        0.021033170000009704
+      ],
+      "median_seconds": 0.01770276,
+      "mb_per_second": 1785.9372775770557,
+      "iterations": 19,
+      "nodes": 5776019,
+      "input_bytes": 1664001,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-2m",
+      "mode": "reuse",
+      "sha256": "6215b122f521eff787c72b8745b704e2aebec1afee5f8de993078c194b49ed7b",
+      "seconds": [
+        0.024444076,
+        0.02281294,
+        0.025583383,
+        0.026180914,
+        0.024671387
+      ],
+      "process_seconds": [
+        0.10901227499999777,
+        0.11006277800001385,
+        0.11613969400002588,
+        0.1092289259999859,
+        0.10576261400001385
+      ],
+      "median_seconds": 0.024671387,
+      "mb_per_second": 1281.4852687447205,
+      "iterations": 19,
+      "nodes": 5776019,
+      "input_bytes": 1664001,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-2m",
+      "mode": "write",
+      "sha256": "6215b122f521eff787c72b8745b704e2aebec1afee5f8de993078c194b49ed7b",
+      "seconds": [
+        0.027886237,
+        0.023094261,
+        0.022751395,
+        0.024230866,
+        0.023051909
+      ],
+      "process_seconds": [
+        0.11518652999998835,
+        0.10777204699999743,
+        0.10905587700000297,
+        0.1116311010000004,
+        0.10942089900001406
+      ],
+      "median_seconds": 0.023094261,
+      "mb_per_second": 1368.9989474008282,
+      "iterations": 19,
+      "nodes": 5776019,
+      "input_bytes": 1664001,
+      "output_bytes": 31616019
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-2m",
+      "mode": "write",
+      "sha256": "6215b122f521eff787c72b8745b704e2aebec1afee5f8de993078c194b49ed7b",
+      "seconds": [
+        0.043609329,
+        0.045985958,
+        0.043455102,
+        0.045592993,
+        0.045323282
+      ],
+      "process_seconds": [
+        0.06526182800001834,
+        0.06844956399999091,
+        0.06380524200000082,
+        0.06667778499999599,
+        0.06733955400000013
+      ],
+      "median_seconds": 0.045323282,
+      "mb_per_second": 697.566848755569,
+      "iterations": 19,
+      "nodes": 5776019,
+      "input_bytes": 1664001,
+      "output_bytes": 31616019
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-2m",
+      "mode": "write",
+      "sha256": "6215b122f521eff787c72b8745b704e2aebec1afee5f8de993078c194b49ed7b",
+      "seconds": [
+        0.017956457,
+        0.014866753,
+        0.016178847,
+        0.015048795,
+        0.016451542
+      ],
+      "process_seconds": [
+        0.02362970100000439,
+        0.02059284300000286,
+        0.021490542999998752,
+        0.021272699999997258,
+        0.02299396899999806
+      ],
+      "median_seconds": 0.016178847,
+      "mb_per_second": 1954.1577344788536,
+      "iterations": 19,
+      "nodes": 5776019,
+      "input_bytes": 1664001,
+      "output_bytes": 31616019
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-2m",
+      "mode": "roundtrip",
+      "sha256": "6215b122f521eff787c72b8745b704e2aebec1afee5f8de993078c194b49ed7b",
+      "seconds": [
+        0.045672384,
+        0.050495026,
+        0.049514456,
+        0.048784824,
+        0.046717114
+      ],
+      "process_seconds": [
+        0.13307189399998265,
+        0.13535460700001067,
+        0.13647022300000344,
+        0.134854071999996,
+        0.1338161519999801
+      ],
+      "median_seconds": 0.048784824,
+      "mb_per_second": 648.0707811921183,
+      "iterations": 19,
+      "nodes": 5776019,
+      "input_bytes": 1664001,
+      "output_bytes": 31616019
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-2m",
+      "mode": "roundtrip",
+      "sha256": "6215b122f521eff787c72b8745b704e2aebec1afee5f8de993078c194b49ed7b",
+      "seconds": [
+        0.277211263,
+        0.270494326,
+        0.276771776,
+        0.265716195,
+        0.263529495
+      ],
+      "process_seconds": [
+        0.29574881400000663,
+        0.2876901690000011,
+        0.29491624299998875,
+        0.28318585799999596,
+        0.2827027170000065
+      ],
+      "median_seconds": 0.270494326,
+      "mb_per_second": 116.88237408721098,
+      "iterations": 19,
+      "nodes": 5776019,
+      "input_bytes": 1664001,
+      "output_bytes": 31616019
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-2m",
+      "mode": "roundtrip",
+      "sha256": "6215b122f521eff787c72b8745b704e2aebec1afee5f8de993078c194b49ed7b",
+      "seconds": [
+        0.029672059,
+        0.034149501,
+        0.028802996,
+        0.031106337,
+        0.030081829
+      ],
+      "process_seconds": [
+        0.03533621799999764,
+        0.039658518999999615,
+        0.03430775600000402,
+        0.035905628999984174,
+        0.035404854999995905
+      ],
+      "median_seconds": 0.030081829,
+      "mb_per_second": 1051.0005558505102,
+      "iterations": 19,
+      "nodes": 5776019,
+      "input_bytes": 1664001,
+      "output_bytes": 31616019
+    },
+    {
+      "implementation": "nia",
+      "corpus": "integers-100k",
+      "mode": "parse",
+      "sha256": "54f6a6d1d829b083f7cc56148076dd7f7b3a493c26a81d1ba8ab93cf877cd9fa",
+      "seconds": [
+        0.027996003,
+        0.029083183,
+        0.026090312,
+        0.026806185,
+        0.027410015
+      ],
+      "process_seconds": [
+        0.02893561499999464,
+        0.03001563499998383,
+        0.027267414000021972,
+        0.02771985700002233,
+        0.028292786999998043
+      ],
+      "median_seconds": 0.027410015,
+      "mb_per_second": 1166.509029637525,
+      "iterations": 330,
+      "nodes": 5940330,
+      "input_bytes": 96891,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "serde",
+      "corpus": "integers-100k",
+      "mode": "parse",
+      "sha256": "54f6a6d1d829b083f7cc56148076dd7f7b3a493c26a81d1ba8ab93cf877cd9fa",
+      "seconds": [
+        0.076204487,
+        0.078494004,
+        0.07545776,
+        0.074445058,
+        0.073502047
+      ],
+      "process_seconds": [
+        0.07739226600000393,
+        0.0795960149999928,
+        0.07667080899997814,
+        0.07568862700000523,
+        0.07499122399997304
+      ],
+      "median_seconds": 0.07545776,
+      "mb_per_second": 423.73415272332494,
+      "iterations": 330,
+      "nodes": 5940330,
+      "input_bytes": 96891,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "integers-100k",
+      "mode": "parse",
+      "sha256": "54f6a6d1d829b083f7cc56148076dd7f7b3a493c26a81d1ba8ab93cf877cd9fa",
+      "seconds": [
+        0.021866726,
+        0.020581106,
+        0.021120089,
+        0.020776306,
+        0.022102077
+      ],
+      "process_seconds": [
+        0.02269927099999336,
+        0.021331780000025446,
+        0.021822202000009838,
+        0.021569752000004883,
+        0.022947061999985863
+      ],
+      "median_seconds": 0.021120089,
+      "mb_per_second": 1513.9154953371644,
+      "iterations": 330,
+      "nodes": 5940330,
+      "input_bytes": 96891,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "integers-100k",
+      "mode": "reuse",
+      "sha256": "54f6a6d1d829b083f7cc56148076dd7f7b3a493c26a81d1ba8ab93cf877cd9fa",
+      "seconds": [
+        0.02904563,
+        0.027649946,
+        0.028205877,
+        0.027589906,
+        0.028049838
+      ],
+      "process_seconds": [
+        0.030036120999994864,
+        0.028652647000001252,
+        0.029380433999989464,
+        0.028715946999994912,
+        0.02900776600000654
+      ],
+      "median_seconds": 0.028049838,
+      "mb_per_second": 1139.9007010307866,
+      "iterations": 330,
+      "nodes": 5940330,
+      "input_bytes": 96891,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "integers-100k",
+      "mode": "write",
+      "sha256": "54f6a6d1d829b083f7cc56148076dd7f7b3a493c26a81d1ba8ab93cf877cd9fa",
+      "seconds": [
+        0.021529645,
+        0.024311787,
+        0.020374204,
+        0.023657931,
+        0.021857891
+      ],
+      "process_seconds": [
+        0.022519233999986454,
+        0.02520790199997691,
+        0.021212512999994715,
+        0.024595602999994526,
+        0.022970101999987946
+      ],
+      "median_seconds": 0.021857891,
+      "mb_per_second": 1462.814047338785,
+      "iterations": 330,
+      "nodes": 5940330,
+      "input_bytes": 96891,
+      "output_bytes": 31974030
+    },
+    {
+      "implementation": "serde",
+      "corpus": "integers-100k",
+      "mode": "write",
+      "sha256": "54f6a6d1d829b083f7cc56148076dd7f7b3a493c26a81d1ba8ab93cf877cd9fa",
+      "seconds": [
+        0.034736073,
+        0.031477839,
+        0.032956908,
+        0.033130027,
+        0.035725499
+      ],
+      "process_seconds": [
+        0.03595524699997554,
+        0.03275989400000867,
+        0.033971705999988444,
+        0.0344159809999951,
+        0.03691556100000071
+      ],
+      "median_seconds": 0.033130027,
+      "mb_per_second": 965.1072726261285,
+      "iterations": 330,
+      "nodes": 5940330,
+      "input_bytes": 96891,
+      "output_bytes": 31974030
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "integers-100k",
+      "mode": "write",
+      "sha256": "54f6a6d1d829b083f7cc56148076dd7f7b3a493c26a81d1ba8ab93cf877cd9fa",
+      "seconds": [
+        0.010945152,
+        0.01108722,
+        0.011169617,
+        0.00987706,
+        0.009785264
+      ],
+      "process_seconds": [
+        0.01172656800000027,
+        0.011903856999992968,
+        0.011992125999995551,
+        0.010677889999982426,
+        0.010524472000014384
+      ],
+      "median_seconds": 0.010945152,
+      "mb_per_second": 2921.2961135669934,
+      "iterations": 330,
+      "nodes": 5940330,
+      "input_bytes": 96891,
+      "output_bytes": 31974030
+    },
+    {
+      "implementation": "nia",
+      "corpus": "integers-100k",
+      "mode": "roundtrip",
+      "sha256": "54f6a6d1d829b083f7cc56148076dd7f7b3a493c26a81d1ba8ab93cf877cd9fa",
+      "seconds": [
+        0.050323233,
+        0.048809955,
+        0.04908489,
+        0.050603162,
+        0.050807299
+      ],
+      "process_seconds": [
+        0.05138973699999383,
+        0.049828574000002845,
+        0.05018461600002411,
+        0.05188531799998941,
+        0.05190112799999724
+      ],
+      "median_seconds": 0.050323233,
+      "mb_per_second": 635.3731287494983,
+      "iterations": 330,
+      "nodes": 5940330,
+      "input_bytes": 96891,
+      "output_bytes": 31974030
+    },
+    {
+      "implementation": "serde",
+      "corpus": "integers-100k",
+      "mode": "roundtrip",
+      "sha256": "54f6a6d1d829b083f7cc56148076dd7f7b3a493c26a81d1ba8ab93cf877cd9fa",
+      "seconds": [
+        0.112722047,
+        0.11794456,
+        0.117323881,
+        0.113056887,
+        0.118738389
+      ],
+      "process_seconds": [
+        0.11402215900000101,
+        0.11932253400001969,
+        0.11870764899998676,
+        0.11439428199997792,
+        0.12000170100000673
+      ],
+      "median_seconds": 0.117323881,
+      "mb_per_second": 272.52789225409276,
+      "iterations": 330,
+      "nodes": 5940330,
+      "input_bytes": 96891,
+      "output_bytes": 31974030
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "integers-100k",
+      "mode": "roundtrip",
+      "sha256": "54f6a6d1d829b083f7cc56148076dd7f7b3a493c26a81d1ba8ab93cf877cd9fa",
+      "seconds": [
+        0.034453724,
+        0.034475111,
+        0.034447527,
+        0.034427678,
+        0.033447158
+      ],
+      "process_seconds": [
+        0.03543191200000706,
+        0.03551292999998168,
+        0.035261437000002616,
+        0.03522034700000631,
+        0.03433268399999179
+      ],
+      "median_seconds": 0.034447527,
+      "mb_per_second": 928.1952228384929,
+      "iterations": 330,
+      "nodes": 5940330,
+      "input_bytes": 96891,
+      "output_bytes": 31974030
+    },
+    {
+      "implementation": "nia",
+      "corpus": "strings-100k",
+      "mode": "parse",
+      "sha256": "b41a501a4371923fb1f99666d5a61ecfa2f32408c434b1e313c8030e161b9ea5",
+      "seconds": [
+        0.004089138,
+        0.00426483,
+        0.004292974,
+        0.003922655,
+        0.004917946
+      ],
+      "process_seconds": [
+        0.005029634999999644,
+        0.005074967000012975,
+        0.005150552999992897,
+        0.004730184999999665,
+        0.0057811990000118385
+      ],
+      "median_seconds": 0.00426483,
+      "mb_per_second": 7490.733745542027,
+      "iterations": 306,
+      "nodes": 73746,
+      "input_bytes": 104401,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "serde",
+      "corpus": "strings-100k",
+      "mode": "parse",
+      "sha256": "b41a501a4371923fb1f99666d5a61ecfa2f32408c434b1e313c8030e161b9ea5",
+      "seconds": [
+        0.006037791,
+        0.006988801,
+        0.007084475,
+        0.007187402,
+        0.007221555
+      ],
+      "process_seconds": [
+        0.006769728999984181,
+        0.007584469999983412,
+        0.007748064000026034,
+        0.007920372000000953,
+        0.007852133000000094
+      ],
+      "median_seconds": 0.007084475,
+      "mb_per_second": 4509.39639140515,
+      "iterations": 306,
+      "nodes": 73746,
+      "input_bytes": 104401,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "strings-100k",
+      "mode": "parse",
+      "sha256": "b41a501a4371923fb1f99666d5a61ecfa2f32408c434b1e313c8030e161b9ea5",
+      "seconds": [
+        0.007152524,
+        0.007722664,
+        0.007279001,
+        0.007053674,
+        0.007272259
+      ],
+      "process_seconds": [
+        0.007762595999992072,
+        0.008295481000004656,
+        0.007836666000002879,
+        0.007701481999987436,
+        0.007952017000008027
+      ],
+      "median_seconds": 0.007272259,
+      "mb_per_second": 4392.954926385322,
+      "iterations": 306,
+      "nodes": 73746,
+      "input_bytes": 104401,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "strings-100k",
+      "mode": "reuse",
+      "sha256": "b41a501a4371923fb1f99666d5a61ecfa2f32408c434b1e313c8030e161b9ea5",
+      "seconds": [
+        0.004179661,
+        0.004071268,
+        0.004826589,
+        0.004329534,
+        0.004926447
+      ],
+      "process_seconds": [
+        0.004991321000005655,
+        0.0048479470000017955,
+        0.005765792999994801,
+        0.00518425100000286,
+        0.00574515800002473
+      ],
+      "median_seconds": 0.004329534,
+      "mb_per_second": 7378.786261985701,
+      "iterations": 306,
+      "nodes": 73746,
+      "input_bytes": 104401,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "strings-100k",
+      "mode": "write",
+      "sha256": "b41a501a4371923fb1f99666d5a61ecfa2f32408c434b1e313c8030e161b9ea5",
+      "seconds": [
+        0.001368856,
+        0.001312797,
+        0.001312983,
+        0.001304119,
+        0.001324329
+      ],
+      "process_seconds": [
+        0.002204739000006839,
+        0.002069109999979446,
+        0.002334163999989869,
+        0.002252368000000615,
+        0.002126900000007481
+      ],
+      "median_seconds": 0.001312983,
+      "mb_per_second": 24331.393475772344,
+      "iterations": 306,
+      "nodes": 73746,
+      "input_bytes": 104401,
+      "output_bytes": 31946706
+    },
+    {
+      "implementation": "serde",
+      "corpus": "strings-100k",
+      "mode": "write",
+      "sha256": "b41a501a4371923fb1f99666d5a61ecfa2f32408c434b1e313c8030e161b9ea5",
+      "seconds": [
+        0.009867151,
+        0.00863102,
+        0.009698871,
+        0.009931569,
+        0.009920913
+      ],
+      "process_seconds": [
+        0.010794137999994291,
+        0.00949072899999237,
+        0.010731114000009256,
+        0.01081230600001959,
+        0.010744603999995661
+      ],
+      "median_seconds": 0.009867151,
+      "mb_per_second": 3237.6828934714795,
+      "iterations": 306,
+      "nodes": 73746,
+      "input_bytes": 104401,
+      "output_bytes": 31946706
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "strings-100k",
+      "mode": "write",
+      "sha256": "b41a501a4371923fb1f99666d5a61ecfa2f32408c434b1e313c8030e161b9ea5",
+      "seconds": [
+        0.000968797,
+        0.000939087,
+        0.000893801,
+        0.000906649,
+        0.000938638
+      ],
+      "process_seconds": [
+        0.0015878210000153103,
+        0.0016010049999977127,
+        0.0015090759999907277,
+        0.001450533999985737,
+        0.0014724000000114756
+      ],
+      "median_seconds": 0.000938638,
+      "mb_per_second": 34035.17223892491,
+      "iterations": 306,
+      "nodes": 73746,
+      "input_bytes": 104401,
+      "output_bytes": 31946706
+    },
+    {
+      "implementation": "nia",
+      "corpus": "strings-100k",
+      "mode": "roundtrip",
+      "sha256": "b41a501a4371923fb1f99666d5a61ecfa2f32408c434b1e313c8030e161b9ea5",
+      "seconds": [
+        0.005129081,
+        0.005141321,
+        0.006307837,
+        0.005928083,
+        0.005473464
+      ],
+      "process_seconds": [
+        0.006000093000011475,
+        0.006065653999996812,
+        0.007236678000026586,
+        0.006812862000003861,
+        0.006382467999998198
+      ],
+      "median_seconds": 0.005473464,
+      "mb_per_second": 5836.652255317656,
+      "iterations": 306,
+      "nodes": 73746,
+      "input_bytes": 104401,
+      "output_bytes": 31946706
+    },
+    {
+      "implementation": "serde",
+      "corpus": "strings-100k",
+      "mode": "roundtrip",
+      "sha256": "b41a501a4371923fb1f99666d5a61ecfa2f32408c434b1e313c8030e161b9ea5",
+      "seconds": [
+        0.014793844,
+        0.01500305,
+        0.015652901,
+        0.017000561,
+        0.016060407
+      ],
+      "process_seconds": [
+        0.015556594000003088,
+        0.01582666599998106,
+        0.016553345999994917,
+        0.017752903000001652,
+        0.0169776660000025
+      ],
+      "median_seconds": 0.015652901,
+      "mb_per_second": 2040.9447424474222,
+      "iterations": 306,
+      "nodes": 73746,
+      "input_bytes": 104401,
+      "output_bytes": 31946706
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "strings-100k",
+      "mode": "roundtrip",
+      "sha256": "b41a501a4371923fb1f99666d5a61ecfa2f32408c434b1e313c8030e161b9ea5",
+      "seconds": [
+        0.008324769,
+        0.008275187,
+        0.008351893,
+        0.0080837,
+        0.008334868
+      ],
+      "process_seconds": [
+        0.009132254000007833,
+        0.00902312899998492,
+        0.008912473999998838,
+        0.008690723999990269,
+        0.008981026000014936
+      ],
+      "median_seconds": 0.008324769,
+      "mb_per_second": 3837.5486454939473,
+      "iterations": 306,
+      "nodes": 73746,
+      "input_bytes": 104401,
+      "output_bytes": 31946706
+    },
+    {
+      "implementation": "nia",
+      "corpus": "unicode-100k",
+      "mode": "parse",
+      "sha256": "fed38be838d4ec92ea5e20d18d24963c7691cf4cb964dfe06847ac5278d18165",
+      "seconds": [
+        0.012965598,
+        0.013215608,
+        0.014344731,
+        0.014651949,
+        0.013925584
+      ],
+      "process_seconds": [
+        0.014018202999977802,
+        0.01430763600001228,
+        0.01531252699999186,
+        0.015570288999981585,
+        0.014857019000004357
+      ],
+      "median_seconds": 0.013925584,
+      "mb_per_second": 2293.7162276282274,
+      "iterations": 338,
+      "nodes": 101738,
+      "input_bytes": 94501,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "serde",
+      "corpus": "unicode-100k",
+      "mode": "parse",
+      "sha256": "fed38be838d4ec92ea5e20d18d24963c7691cf4cb964dfe06847ac5278d18165",
+      "seconds": [
+        0.022186815,
+        0.023055987,
+        0.022553458,
+        0.022956336,
+        0.02164348
+      ],
+      "process_seconds": [
+        0.023044042000009313,
+        0.023797207000001208,
+        0.02331668200000081,
+        0.0236636489999853,
+        0.02262623199999325
+      ],
+      "median_seconds": 0.022553458,
+      "mb_per_second": 1416.2501377837493,
+      "iterations": 338,
+      "nodes": 101738,
+      "input_bytes": 94501,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "unicode-100k",
+      "mode": "parse",
+      "sha256": "fed38be838d4ec92ea5e20d18d24963c7691cf4cb964dfe06847ac5278d18165",
+      "seconds": [
+        0.010485774,
+        0.008787089,
+        0.009285125,
+        0.009093335,
+        0.008836727
+      ],
+      "process_seconds": [
+        0.011272171999991087,
+        0.009422493999977632,
+        0.009941902999997865,
+        0.009859778999981472,
+        0.009488767999982883
+      ],
+      "median_seconds": 0.009093335,
+      "mb_per_second": 3512.609840064179,
+      "iterations": 338,
+      "nodes": 101738,
+      "input_bytes": 94501,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "unicode-100k",
+      "mode": "reuse",
+      "sha256": "fed38be838d4ec92ea5e20d18d24963c7691cf4cb964dfe06847ac5278d18165",
+      "seconds": [
+        0.015589122,
+        0.014641492,
+        0.014509251,
+        0.01477688,
+        0.014673093
+      ],
+      "process_seconds": [
+        0.01651454500000682,
+        0.015508552999989433,
+        0.015622363000005635,
+        0.01578469399998994,
+        0.015548048000027848
+      ],
+      "median_seconds": 0.014673093,
+      "mb_per_second": 2176.8646869477348,
+      "iterations": 338,
+      "nodes": 101738,
+      "input_bytes": 94501,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "unicode-100k",
+      "mode": "write",
+      "sha256": "fed38be838d4ec92ea5e20d18d24963c7691cf4cb964dfe06847ac5278d18165",
+      "seconds": [
+        0.001642735,
+        0.001696086,
+        0.001622333,
+        0.001635827,
+        0.00156285
+      ],
+      "process_seconds": [
+        0.002460121000012805,
+        0.0024600270000121327,
+        0.0024222179999924265,
+        0.002525588999986894,
+        0.0023674430000255597
+      ],
+      "median_seconds": 0.001635827,
+      "mb_per_second": 19526.110034863097,
+      "iterations": 338,
+      "nodes": 101738,
+      "input_bytes": 94501,
+      "output_bytes": 31941338
+    },
+    {
+      "implementation": "serde",
+      "corpus": "unicode-100k",
+      "mode": "write",
+      "sha256": "fed38be838d4ec92ea5e20d18d24963c7691cf4cb964dfe06847ac5278d18165",
+      "seconds": [
+        0.010378949,
+        0.008640344,
+        0.009032057,
+        0.009706152,
+        0.009641828
+      ],
+      "process_seconds": [
+        0.01133602600000927,
+        0.009379686000016818,
+        0.009682340000011891,
+        0.010446699999988596,
+        0.010626067000004014
+      ],
+      "median_seconds": 0.009641828,
+      "mb_per_second": 3312.7886122838945,
+      "iterations": 338,
+      "nodes": 101738,
+      "input_bytes": 94501,
+      "output_bytes": 31941338
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "unicode-100k",
+      "mode": "write",
+      "sha256": "fed38be838d4ec92ea5e20d18d24963c7691cf4cb964dfe06847ac5278d18165",
+      "seconds": [
+        0.000946364,
+        0.000918606,
+        0.000970122,
+        0.000939758,
+        0.000914659
+      ],
+      "process_seconds": [
+        0.001596770999981345,
+        0.0015529519999972763,
+        0.0015802359999952387,
+        0.0016423750000171822,
+        0.0015582620000031966
+      ],
+      "median_seconds": 0.000939758,
+      "mb_per_second": 33988.89714160454,
+      "iterations": 338,
+      "nodes": 101738,
+      "input_bytes": 94501,
+      "output_bytes": 31941338
+    },
+    {
+      "implementation": "nia",
+      "corpus": "unicode-100k",
+      "mode": "roundtrip",
+      "sha256": "fed38be838d4ec92ea5e20d18d24963c7691cf4cb964dfe06847ac5278d18165",
+      "seconds": [
+        0.017196984,
+        0.013922585,
+        0.015105196,
+        0.018188189,
+        0.015890398
+      ],
+      "process_seconds": [
+        0.01845893700001966,
+        0.014913350000000491,
+        0.016226522000010846,
+        0.01949547999998913,
+        0.01705778400000213
+      ],
+      "median_seconds": 0.015890398,
+      "mb_per_second": 2010.103082377169,
+      "iterations": 338,
+      "nodes": 101738,
+      "input_bytes": 94501,
+      "output_bytes": 31941338
+    },
+    {
+      "implementation": "serde",
+      "corpus": "unicode-100k",
+      "mode": "roundtrip",
+      "sha256": "fed38be838d4ec92ea5e20d18d24963c7691cf4cb964dfe06847ac5278d18165",
+      "seconds": [
+        0.03336519,
+        0.033526828,
+        0.034646014,
+        0.033487821,
+        0.033357841
+      ],
+      "process_seconds": [
+        0.03437837900000318,
+        0.0346350669999822,
+        0.03551576999998929,
+        0.03444391400000768,
+        0.034452898000012055
+      ],
+      "median_seconds": 0.033487821,
+      "mb_per_second": 953.81953934835,
+      "iterations": 338,
+      "nodes": 101738,
+      "input_bytes": 94501,
+      "output_bytes": 31941338
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "unicode-100k",
+      "mode": "roundtrip",
+      "sha256": "fed38be838d4ec92ea5e20d18d24963c7691cf4cb964dfe06847ac5278d18165",
+      "seconds": [
+        0.011036849,
+        0.010362058,
+        0.012112309,
+        0.010965226,
+        0.012415019
+      ],
+      "process_seconds": [
+        0.011916628999983914,
+        0.011177319000012176,
+        0.01304437100000655,
+        0.011904418000000305,
+        0.01316264899998032
+      ],
+      "median_seconds": 0.011036849,
+      "mb_per_second": 2894.0631515389946,
+      "iterations": 338,
+      "nodes": 101738,
+      "input_bytes": 94501,
+      "output_bytes": 31941338
+    },
+    {
+      "implementation": "nia",
+      "corpus": "escapes-100k",
+      "mode": "parse",
+      "sha256": "8dbb1e6187e62fbb65390781c4fa6869373e50067b8c7207b19084eee85d6041",
+      "seconds": [
+        0.028543693,
+        0.02740661,
+        0.026579916,
+        0.025840244,
+        0.025382381
+      ],
+      "process_seconds": [
+        0.029612353999993957,
+        0.02865171999999916,
+        0.027611581999991586,
+        0.026810610000012502,
+        0.026218798000002153
+      ],
+      "median_seconds": 0.026579916,
+      "mb_per_second": 1202.1168915657972,
+      "iterations": 366,
+      "nodes": 110166,
+      "input_bytes": 87301,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "serde",
+      "corpus": "escapes-100k",
+      "mode": "parse",
+      "sha256": "8dbb1e6187e62fbb65390781c4fa6869373e50067b8c7207b19084eee85d6041",
+      "seconds": [
+        0.078351706,
+        0.081035136,
+        0.085682779,
+        0.083342851,
+        0.078547695
+      ],
+      "process_seconds": [
+        0.07938296999998329,
+        0.08220421800001532,
+        0.08684126599999331,
+        0.08450964200000044,
+        0.07974495100000922
+      ],
+      "median_seconds": 0.081035136,
+      "mb_per_second": 394.30014654384,
+      "iterations": 366,
+      "nodes": 110166,
+      "input_bytes": 87301,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "escapes-100k",
+      "mode": "parse",
+      "sha256": "8dbb1e6187e62fbb65390781c4fa6869373e50067b8c7207b19084eee85d6041",
+      "seconds": [
+        0.016247739,
+        0.01406219,
+        0.015024762,
+        0.01445894,
+        0.014687924
+      ],
+      "process_seconds": [
+        0.01703024099998629,
+        0.01466627199999948,
+        0.01579492600001231,
+        0.015236681000004637,
+        0.015361342999995031
+      ],
+      "median_seconds": 0.014687924,
+      "mb_per_second": 2175.403821533935,
+      "iterations": 366,
+      "nodes": 110166,
+      "input_bytes": 87301,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "escapes-100k",
+      "mode": "reuse",
+      "sha256": "8dbb1e6187e62fbb65390781c4fa6869373e50067b8c7207b19084eee85d6041",
+      "seconds": [
+        0.027944129,
+        0.028233134,
+        0.02803956,
+        0.027724902,
+        0.025172634
+      ],
+      "process_seconds": [
+        0.02892081900000676,
+        0.0292509530000018,
+        0.02901239799999189,
+        0.028693434999979672,
+        0.026225433999996994
+      ],
+      "median_seconds": 0.027944129,
+      "mb_per_second": 1143.430378524233,
+      "iterations": 366,
+      "nodes": 110166,
+      "input_bytes": 87301,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "escapes-100k",
+      "mode": "write",
+      "sha256": "8dbb1e6187e62fbb65390781c4fa6869373e50067b8c7207b19084eee85d6041",
+      "seconds": [
+        0.017316239,
+        0.01601324,
+        0.016233148,
+        0.016561247,
+        0.016248672
+      ],
+      "process_seconds": [
+        0.018191402000013568,
+        0.016977548999989267,
+        0.01717578099999173,
+        0.017663644000009526,
+        0.017039184999987356
+      ],
+      "median_seconds": 0.016248672,
+      "mb_per_second": 1966.447842629847,
+      "iterations": 366,
+      "nodes": 110166,
+      "input_bytes": 87301,
+      "output_bytes": 31952166
+    },
+    {
+      "implementation": "serde",
+      "corpus": "escapes-100k",
+      "mode": "write",
+      "sha256": "8dbb1e6187e62fbb65390781c4fa6869373e50067b8c7207b19084eee85d6041",
+      "seconds": [
+        0.024452228,
+        0.023721485,
+        0.024721471,
+        0.023600199,
+        0.025009746
+      ],
+      "process_seconds": [
+        0.02561368900001071,
+        0.024849206999988382,
+        0.02593911299999263,
+        0.024615118000014036,
+        0.0261928150000017
+      ],
+      "median_seconds": 0.024452228,
+      "mb_per_second": 1306.717980872745,
+      "iterations": 366,
+      "nodes": 110166,
+      "input_bytes": 87301,
+      "output_bytes": 31952166
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "escapes-100k",
+      "mode": "write",
+      "sha256": "8dbb1e6187e62fbb65390781c4fa6869373e50067b8c7207b19084eee85d6041",
+      "seconds": [
+        0.013065865,
+        0.014627167,
+        0.01340642,
+        0.013670655,
+        0.014004389
+      ],
+      "process_seconds": [
+        0.013911470000010695,
+        0.015302796000014496,
+        0.01418672600001969,
+        0.014406661000009535,
+        0.014821853999990253
+      ],
+      "median_seconds": 0.013670655,
+      "mb_per_second": 2337.2812787682815,
+      "iterations": 366,
+      "nodes": 110166,
+      "input_bytes": 87301,
+      "output_bytes": 31952166
+    },
+    {
+      "implementation": "nia",
+      "corpus": "escapes-100k",
+      "mode": "roundtrip",
+      "sha256": "8dbb1e6187e62fbb65390781c4fa6869373e50067b8c7207b19084eee85d6041",
+      "seconds": [
+        0.043916785,
+        0.039092036,
+        0.044310359,
+        0.044164962,
+        0.042893834
+      ],
+      "process_seconds": [
+        0.044938064000007216,
+        0.04016414200000895,
+        0.04538924500002395,
+        0.04513942900001666,
+        0.04375246899999752
+      ],
+      "median_seconds": 0.043916785,
+      "mb_per_second": 727.5615917695251,
+      "iterations": 366,
+      "nodes": 110166,
+      "input_bytes": 87301,
+      "output_bytes": 31952166
+    },
+    {
+      "implementation": "serde",
+      "corpus": "escapes-100k",
+      "mode": "roundtrip",
+      "sha256": "8dbb1e6187e62fbb65390781c4fa6869373e50067b8c7207b19084eee85d6041",
+      "seconds": [
+        0.106071869,
+        0.099218813,
+        0.102237776,
+        0.098329022,
+        0.096873432
+      ],
+      "process_seconds": [
+        0.10743283900001188,
+        0.10029383700000949,
+        0.10341749600002004,
+        0.09952683599999546,
+        0.0981148239999925
+      ],
+      "median_seconds": 0.099218813,
+      "mb_per_second": 322.03737410162324,
+      "iterations": 366,
+      "nodes": 110166,
+      "input_bytes": 87301,
+      "output_bytes": 31952166
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "escapes-100k",
+      "mode": "roundtrip",
+      "sha256": "8dbb1e6187e62fbb65390781c4fa6869373e50067b8c7207b19084eee85d6041",
+      "seconds": [
+        0.029304409,
+        0.028587513,
+        0.028981002,
+        0.029418628,
+        0.028906036
+      ],
+      "process_seconds": [
+        0.030154137000010905,
+        0.029579181000002563,
+        0.029744348999997783,
+        0.030119498000004796,
+        0.029634423999993942
+      ],
+      "median_seconds": 0.028981002,
+      "mb_per_second": 1102.5210929559994,
+      "iterations": 366,
+      "nodes": 110166,
+      "input_bytes": 87301,
+      "output_bytes": 31952166
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-pretty",
+      "mode": "parse",
+      "sha256": "e1966897edb67f9f2f5885b7ced8ae78e193da46ddc98e278e98bdf5fc4311ad",
+      "seconds": [
+        0.015083659,
+        0.015717838,
+        0.015985023,
+        0.01674416,
+        0.016070487
+      ],
+      "process_seconds": [
+        0.016774092999980894,
+        0.017338222999995878,
+        0.01749244100000169,
+        0.018470123000014382,
+        0.01771062299999926
+      ],
+      "median_seconds": 0.015985023,
+      "mb_per_second": 2000.0979667029567,
+      "iterations": 206,
+      "nodes": 3131406,
+      "input_bytes": 155202,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-pretty",
+      "mode": "parse",
+      "sha256": "e1966897edb67f9f2f5885b7ced8ae78e193da46ddc98e278e98bdf5fc4311ad",
+      "seconds": [
+        0.102907748,
+        0.108411157,
+        0.099792465,
+        0.106154577,
+        0.104292561
+      ],
+      "process_seconds": [
+        0.10459499999998911,
+        0.11013799899998844,
+        0.10166344799998228,
+        0.10772355399998901,
+        0.10598800799999708
+      ],
+      "median_seconds": 0.104292561,
+      "mb_per_second": 306.55697485461116,
+      "iterations": 206,
+      "nodes": 3131406,
+      "input_bytes": 155202,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-pretty",
+      "mode": "parse",
+      "sha256": "e1966897edb67f9f2f5885b7ced8ae78e193da46ddc98e278e98bdf5fc4311ad",
+      "seconds": [
+        0.011177325,
+        0.011104928,
+        0.010833416,
+        0.011313423,
+        0.010969506
+      ],
+      "process_seconds": [
+        0.012090193000005911,
+        0.011990797999999359,
+        0.01172520400001531,
+        0.012264683000012155,
+        0.011888486000003695
+      ],
+      "median_seconds": 0.011104928,
+      "mb_per_second": 2879.047212192641,
+      "iterations": 206,
+      "nodes": 3131406,
+      "input_bytes": 155202,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-pretty",
+      "mode": "reuse",
+      "sha256": "e1966897edb67f9f2f5885b7ced8ae78e193da46ddc98e278e98bdf5fc4311ad",
+      "seconds": [
+        0.015845552,
+        0.017075251,
+        0.014905832,
+        0.016830769,
+        0.015569547
+      ],
+      "process_seconds": [
+        0.017518290999987585,
+        0.01861659100001134,
+        0.016620964000026106,
+        0.018262796000016124,
+        0.01707762000000912
+      ],
+      "median_seconds": 0.015845552,
+      "mb_per_second": 2017.702633521382,
+      "iterations": 206,
+      "nodes": 3131406,
+      "input_bytes": 155202,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-pretty",
+      "mode": "write",
+      "sha256": "e1966897edb67f9f2f5885b7ced8ae78e193da46ddc98e278e98bdf5fc4311ad",
+      "seconds": [
+        0.011124531,
+        0.01071125,
+        0.010316079,
+        0.01066658,
+        0.010410992
+      ],
+      "process_seconds": [
+        0.013282472000014423,
+        0.012197471999996878,
+        0.01194035299999996,
+        0.01240701500000796,
+        0.01206005399998844
+      ],
+      "median_seconds": 0.01066658,
+      "mb_per_second": 2997.362978574201,
+      "iterations": 206,
+      "nodes": 3131406,
+      "input_bytes": 155202,
+      "output_bytes": 17139406
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-pretty",
+      "mode": "write",
+      "sha256": "e1966897edb67f9f2f5885b7ced8ae78e193da46ddc98e278e98bdf5fc4311ad",
+      "seconds": [
+        0.016770112,
+        0.017659112,
+        0.018290737,
+        0.017508619,
+        0.017756316
+      ],
+      "process_seconds": [
+        0.018399072999983446,
+        0.01936500499999738,
+        0.01999531400002752,
+        0.01940961600001856,
+        0.019708842000000004
+      ],
+      "median_seconds": 0.017659112,
+      "mb_per_second": 1810.488092492986,
+      "iterations": 206,
+      "nodes": 3131406,
+      "input_bytes": 155202,
+      "output_bytes": 17139406
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-pretty",
+      "mode": "write",
+      "sha256": "e1966897edb67f9f2f5885b7ced8ae78e193da46ddc98e278e98bdf5fc4311ad",
+      "seconds": [
+        0.007567792,
+        0.007324281,
+        0.008158903,
+        0.007767431,
+        0.007637737
+      ],
+      "process_seconds": [
+        0.00838029100000881,
+        0.008098660999991125,
+        0.009231407000015679,
+        0.008527670999995962,
+        0.008406943000011324
+      ],
+      "median_seconds": 0.007637737,
+      "mb_per_second": 4186.005881061366,
+      "iterations": 206,
+      "nodes": 3131406,
+      "input_bytes": 155202,
+      "output_bytes": 17139406
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-pretty",
+      "mode": "roundtrip",
+      "sha256": "e1966897edb67f9f2f5885b7ced8ae78e193da46ddc98e278e98bdf5fc4311ad",
+      "seconds": [
+        0.027172876,
+        0.027155768,
+        0.026154885,
+        0.026605836,
+        0.02675133
+      ],
+      "process_seconds": [
+        0.028843543999983012,
+        0.029065615000007483,
+        0.02795116500001882,
+        0.02822494800000186,
+        0.028646385999991253
+      ],
+      "median_seconds": 0.02675133,
+      "mb_per_second": 1195.1410266330683,
+      "iterations": 206,
+      "nodes": 3131406,
+      "input_bytes": 155202,
+      "output_bytes": 17139406
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-pretty",
+      "mode": "roundtrip",
+      "sha256": "e1966897edb67f9f2f5885b7ced8ae78e193da46ddc98e278e98bdf5fc4311ad",
+      "seconds": [
+        0.121424056,
+        0.1244245,
+        0.11931169,
+        0.125507597,
+        0.123494796
+      ],
+      "process_seconds": [
+        0.12328103199999418,
+        0.1261198330000184,
+        0.12104399400001853,
+        0.1271971360000066,
+        0.12527145300001052
+      ],
+      "median_seconds": 0.123494796,
+      "mb_per_second": 258.8903584244959,
+      "iterations": 206,
+      "nodes": 3131406,
+      "input_bytes": 155202,
+      "output_bytes": 17139406
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-pretty",
+      "mode": "roundtrip",
+      "sha256": "e1966897edb67f9f2f5885b7ced8ae78e193da46ddc98e278e98bdf5fc4311ad",
+      "seconds": [
+        0.019065551,
+        0.020086017,
+        0.018539766,
+        0.020756114,
+        0.018646128
+      ],
+      "process_seconds": [
+        0.020106227000013632,
+        0.02099158900000475,
+        0.019528148999995665,
+        0.02159368499999914,
+        0.0198771000000022
+      ],
+      "median_seconds": 0.019065551,
+      "mb_per_second": 1676.9309211152618,
+      "iterations": 206,
+      "nodes": 3131406,
+      "input_bytes": 155202,
+      "output_bytes": 17139406
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-tabs",
+      "mode": "parse",
+      "sha256": "6bde5fbfc9fdf9960654ac041df9613265e32cc9df98723c683582436fcba142",
+      "seconds": [
+        0.020565831,
+        0.020276716,
+        0.02131138,
+        0.021854804,
+        0.019568151
+      ],
+      "process_seconds": [
+        0.021820820999977286,
+        0.02162279999998873,
+        0.022594052000016518,
+        0.023325440000007802,
+        0.020968632999995407
+      ],
+      "median_seconds": 0.020565831,
+      "mb_per_second": 1549.7792430561158,
+      "iterations": 249,
+      "nodes": 3785049,
+      "input_bytes": 128002,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-tabs",
+      "mode": "parse",
+      "sha256": "6bde5fbfc9fdf9960654ac041df9613265e32cc9df98723c683582436fcba142",
+      "seconds": [
+        0.118936769,
+        0.120366393,
+        0.122678159,
+        0.119880274,
+        0.123852207
+      ],
+      "process_seconds": [
+        0.12053096399998253,
+        0.12216309100000444,
+        0.12440636400000926,
+        0.12154841500000657,
+        0.12553069599999844
+      ],
+      "median_seconds": 0.120366393,
+      "mb_per_second": 264.7956560432944,
+      "iterations": 249,
+      "nodes": 3785049,
+      "input_bytes": 128002,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-tabs",
+      "mode": "parse",
+      "sha256": "6bde5fbfc9fdf9960654ac041df9613265e32cc9df98723c683582436fcba142",
+      "seconds": [
+        0.019649545,
+        0.019380849,
+        0.020499246,
+        0.01894245,
+        0.017312025
+      ],
+      "process_seconds": [
+        0.0204326530000003,
+        0.020190665000001218,
+        0.021328628000020444,
+        0.019921125999985634,
+        0.018271653999988757
+      ],
+      "median_seconds": 0.019380849,
+      "mb_per_second": 1644.5356960368454,
+      "iterations": 249,
+      "nodes": 3785049,
+      "input_bytes": 128002,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-tabs",
+      "mode": "reuse",
+      "sha256": "6bde5fbfc9fdf9960654ac041df9613265e32cc9df98723c683582436fcba142",
+      "seconds": [
+        0.020309286,
+        0.021774496,
+        0.020805282,
+        0.021653009,
+        0.020626114
+      ],
+      "process_seconds": [
+        0.021816817000001265,
+        0.023211017000022593,
+        0.022082213000004458,
+        0.022932929999996077,
+        0.022066250000023047
+      ],
+      "median_seconds": 0.020805282,
+      "mb_per_second": 1531.942609573857,
+      "iterations": 249,
+      "nodes": 3785049,
+      "input_bytes": 128002,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-tabs",
+      "mode": "write",
+      "sha256": "6bde5fbfc9fdf9960654ac041df9613265e32cc9df98723c683582436fcba142",
+      "seconds": [
+        0.014266714,
+        0.012866349,
+        0.014014466,
+        0.012407897,
+        0.015095293
+      ],
+      "process_seconds": [
+        0.0156486469999777,
+        0.014271003999994036,
+        0.015259323999998742,
+        0.013741610000010951,
+        0.01632825900000512
+      ],
+      "median_seconds": 0.014014466,
+      "mb_per_second": 2274.2570426871775,
+      "iterations": 249,
+      "nodes": 3785049,
+      "input_bytes": 128002,
+      "output_bytes": 20717049
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-tabs",
+      "mode": "write",
+      "sha256": "6bde5fbfc9fdf9960654ac041df9613265e32cc9df98723c683582436fcba142",
+      "seconds": [
+        0.023581815,
+        0.022140381,
+        0.023379916,
+        0.022817293,
+        0.022578488
+      ],
+      "process_seconds": [
+        0.025069715999990194,
+        0.02362938200002418,
+        0.025134218999994573,
+        0.02438806800000748,
+        0.024464937999994163
+      ],
+      "median_seconds": 0.022817293,
+      "mb_per_second": 1396.8571118405675,
+      "iterations": 249,
+      "nodes": 3785049,
+      "input_bytes": 128002,
+      "output_bytes": 20717049
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-tabs",
+      "mode": "write",
+      "sha256": "6bde5fbfc9fdf9960654ac041df9613265e32cc9df98723c683582436fcba142",
+      "seconds": [
+        0.010017774,
+        0.008763694,
+        0.009853229,
+        0.009705101,
+        0.009839685
+      ],
+      "process_seconds": [
+        0.011064043999994055,
+        0.009818529000000353,
+        0.010998995999983663,
+        0.010532030000007353,
+        0.010725148000005902
+      ],
+      "median_seconds": 0.009839685,
+      "mb_per_second": 3239.178693220362,
+      "iterations": 249,
+      "nodes": 3785049,
+      "input_bytes": 128002,
+      "output_bytes": 20717049
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-tabs",
+      "mode": "roundtrip",
+      "sha256": "6bde5fbfc9fdf9960654ac041df9613265e32cc9df98723c683582436fcba142",
+      "seconds": [
+        0.034918519,
+        0.034182826,
+        0.035612284,
+        0.037456447,
+        0.036074547
+      ],
+      "process_seconds": [
+        0.036208036000004995,
+        0.03563172500000178,
+        0.0369519620000176,
+        0.03898409900000388,
+        0.03755507600001806
+      ],
+      "median_seconds": 0.035612284,
+      "mb_per_second": 894.9860671671606,
+      "iterations": 249,
+      "nodes": 3785049,
+      "input_bytes": 128002,
+      "output_bytes": 20717049
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-tabs",
+      "mode": "roundtrip",
+      "sha256": "6bde5fbfc9fdf9960654ac041df9613265e32cc9df98723c683582436fcba142",
+      "seconds": [
+        0.151971704,
+        0.151398894,
+        0.155497362,
+        0.152756886,
+        0.157470682
+      ],
+      "process_seconds": [
+        0.15380215400000452,
+        0.15322877299999504,
+        0.15719355099997756,
+        0.1545264789999976,
+        0.15951694000000316
+      ],
+      "median_seconds": 0.152756886,
+      "mb_per_second": 208.64851879737844,
+      "iterations": 249,
+      "nodes": 3785049,
+      "input_bytes": 128002,
+      "output_bytes": 20717049
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-tabs",
+      "mode": "roundtrip",
+      "sha256": "6bde5fbfc9fdf9960654ac041df9613265e32cc9df98723c683582436fcba142",
+      "seconds": [
+        0.028781663,
+        0.02863056,
+        0.028300001,
+        0.02959375,
+        0.030987923
+      ],
+      "process_seconds": [
+        0.029820199999988972,
+        0.029452033000012534,
+        0.02913348699999574,
+        0.03053961800000593,
+        0.03193203399999334
+      ],
+      "median_seconds": 0.028781663,
+      "mb_per_second": 1107.3890344696204,
+      "iterations": 249,
+      "nodes": 3785049,
+      "input_bytes": 128002,
+      "output_bytes": 20717049
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-crlf",
+      "mode": "parse",
+      "sha256": "44671652beaa0e1d9b602e147e39001242a1b8109d67f0649c11496351a72903",
+      "seconds": [
+        0.015959118,
+        0.018568999,
+        0.018955414,
+        0.018482243,
+        0.015804168
+      ],
+      "process_seconds": [
+        0.017812867999992932,
+        0.020412969000005887,
+        0.020814899999976433,
+        0.02012281799997595,
+        0.017500066999986075
+      ],
+      "median_seconds": 0.018482243,
+      "mb_per_second": 1727.9165196561912,
+      "iterations": 191,
+      "nodes": 2903391,
+      "input_bytes": 167203,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-crlf",
+      "mode": "parse",
+      "sha256": "44671652beaa0e1d9b602e147e39001242a1b8109d67f0649c11496351a72903",
+      "seconds": [
+        0.10555223,
+        0.103831359,
+        0.104921161,
+        0.10373952,
+        0.104724589
+      ],
+      "process_seconds": [
+        0.10740675599998895,
+        0.10558130600000482,
+        0.10708589899999765,
+        0.10552619500001015,
+        0.10670774800001936
+      ],
+      "median_seconds": 0.104724589,
+      "mb_per_second": 304.95009152053103,
+      "iterations": 191,
+      "nodes": 2903391,
+      "input_bytes": 167203,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-crlf",
+      "mode": "parse",
+      "sha256": "44671652beaa0e1d9b602e147e39001242a1b8109d67f0649c11496351a72903",
+      "seconds": [
+        0.019369055,
+        0.016553345,
+        0.018428015,
+        0.017656307,
+        0.017058459
+      ],
+      "process_seconds": [
+        0.020370664000012084,
+        0.017486674999986462,
+        0.0192942439999797,
+        0.01850656700000286,
+        0.01796605199999135
+      ],
+      "median_seconds": 0.017656307,
+      "mb_per_second": 1808.7459059247215,
+      "iterations": 191,
+      "nodes": 2903391,
+      "input_bytes": 167203,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-crlf",
+      "mode": "reuse",
+      "sha256": "44671652beaa0e1d9b602e147e39001242a1b8109d67f0649c11496351a72903",
+      "seconds": [
+        0.018295798,
+        0.015818942,
+        0.018162339,
+        0.018555562,
+        0.017518008
+      ],
+      "process_seconds": [
+        0.020113432000016473,
+        0.017606048000004648,
+        0.01972646199999417,
+        0.020277429999993046,
+        0.019309502999988126
+      ],
+      "median_seconds": 0.018162339,
+      "mb_per_second": 1758.3513334928944,
+      "iterations": 191,
+      "nodes": 2903391,
+      "input_bytes": 167203,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-crlf",
+      "mode": "write",
+      "sha256": "44671652beaa0e1d9b602e147e39001242a1b8109d67f0649c11496351a72903",
+      "seconds": [
+        0.009164986,
+        0.00981026,
+        0.010133791,
+        0.009585354,
+        0.009682275
+      ],
+      "process_seconds": [
+        0.011577428000009604,
+        0.011515019000000848,
+        0.011796301999993375,
+        0.01132334700000115,
+        0.011351319999988618
+      ],
+      "median_seconds": 0.009682275,
+      "mb_per_second": 3298.374917052036,
+      "iterations": 191,
+      "nodes": 2903391,
+      "input_bytes": 167203,
+      "output_bytes": 15891391
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-crlf",
+      "mode": "write",
+      "sha256": "44671652beaa0e1d9b602e147e39001242a1b8109d67f0649c11496351a72903",
+      "seconds": [
+        0.018239331,
+        0.018430141,
+        0.019099402,
+        0.016156051,
+        0.016647211
+      ],
+      "process_seconds": [
+        0.019794816000000992,
+        0.020216892000007647,
+        0.020844691000007742,
+        0.01801592599997548,
+        0.01833464299997445
+      ],
+      "median_seconds": 0.018239331,
+      "mb_per_second": 1750.928967734617,
+      "iterations": 191,
+      "nodes": 2903391,
+      "input_bytes": 167203,
+      "output_bytes": 15891391
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-crlf",
+      "mode": "write",
+      "sha256": "44671652beaa0e1d9b602e147e39001242a1b8109d67f0649c11496351a72903",
+      "seconds": [
+        0.007885369,
+        0.007312906,
+        0.006738579,
+        0.006940816,
+        0.008384831
+      ],
+      "process_seconds": [
+        0.008815888000015093,
+        0.008343934999999192,
+        0.0080134170000008,
+        0.007883762000005845,
+        0.009902315999994471
+      ],
+      "median_seconds": 0.007312906,
+      "mb_per_second": 4367.04273239667,
+      "iterations": 191,
+      "nodes": 2903391,
+      "input_bytes": 167203,
+      "output_bytes": 15891391
+    },
+    {
+      "implementation": "nia",
+      "corpus": "records-crlf",
+      "mode": "roundtrip",
+      "sha256": "44671652beaa0e1d9b602e147e39001242a1b8109d67f0649c11496351a72903",
+      "seconds": [
+        0.031135292,
+        0.027291997,
+        0.027689038,
+        0.028497997,
+        0.028057725
+      ],
+      "process_seconds": [
+        0.032780156999990595,
+        0.029124724000013202,
+        0.029823306000025696,
+        0.03051184900002113,
+        0.02992751100001101
+      ],
+      "median_seconds": 0.028057725,
+      "mb_per_second": 1138.2167656144609,
+      "iterations": 191,
+      "nodes": 2903391,
+      "input_bytes": 167203,
+      "output_bytes": 15891391
+    },
+    {
+      "implementation": "serde",
+      "corpus": "records-crlf",
+      "mode": "roundtrip",
+      "sha256": "44671652beaa0e1d9b602e147e39001242a1b8109d67f0649c11496351a72903",
+      "seconds": [
+        0.118095811,
+        0.117830127,
+        0.117292141,
+        0.116580806,
+        0.114195737
+      ],
+      "process_seconds": [
+        0.11988653499997781,
+        0.11966003199998454,
+        0.11899309000000358,
+        0.11852128099999959,
+        0.11674930899999936
+      ],
+      "median_seconds": 0.117292141,
+      "mb_per_second": 272.2754715509882,
+      "iterations": 191,
+      "nodes": 2903391,
+      "input_bytes": 167203,
+      "output_bytes": 15891391
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "records-crlf",
+      "mode": "roundtrip",
+      "sha256": "44671652beaa0e1d9b602e147e39001242a1b8109d67f0649c11496351a72903",
+      "seconds": [
+        0.025824258,
+        0.02619652,
+        0.026566008,
+        0.025042497,
+        0.027833731
+      ],
+      "process_seconds": [
+        0.026711153000007926,
+        0.027370477000005167,
+        0.027569009999979244,
+        0.026246009999994158,
+        0.028890452000013056
+      ],
+      "median_seconds": 0.02619652,
+      "mb_per_second": 1219.0845577962264,
+      "iterations": 191,
+      "nodes": 2903391,
+      "input_bytes": 167203,
+      "output_bytes": 15891391
+    },
+    {
+      "implementation": "nia",
+      "corpus": "mixed-100k",
+      "mode": "parse",
+      "sha256": "b9b234f1e359ac2558b9563b764287c405bc357d2a02556a91b11783511578d5",
+      "seconds": [
+        0.025219275,
+        0.024672002,
+        0.025479566,
+        0.023668934,
+        0.0263522
+      ],
+      "process_seconds": [
+        0.026255453000004536,
+        0.025757576000017934,
+        0.02660994699999719,
+        0.02486464799997634,
+        0.02762788900000146
+      ],
+      "median_seconds": 0.025219275,
+      "mb_per_second": 1265.219757506907,
+      "iterations": 315,
+      "nodes": 2720655,
+      "input_bytes": 101295,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "serde",
+      "corpus": "mixed-100k",
+      "mode": "parse",
+      "sha256": "b9b234f1e359ac2558b9563b764287c405bc357d2a02556a91b11783511578d5",
+      "seconds": [
+        0.142046872,
+        0.141640842,
+        0.142544491,
+        0.140131431,
+        0.138265885
+      ],
+      "process_seconds": [
+        0.14353491399998575,
+        0.14322871499999223,
+        0.14411828300001162,
+        0.14156631999998126,
+        0.13964370299999018
+      ],
+      "median_seconds": 0.141640842,
+      "mb_per_second": 225.27347726441786,
+      "iterations": 315,
+      "nodes": 2720655,
+      "input_bytes": 101295,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "mixed-100k",
+      "mode": "parse",
+      "sha256": "b9b234f1e359ac2558b9563b764287c405bc357d2a02556a91b11783511578d5",
+      "seconds": [
+        0.015680852,
+        0.016664925,
+        0.018063443,
+        0.016089126,
+        0.016681313
+      ],
+      "process_seconds": [
+        0.01647538500000678,
+        0.017378706999977567,
+        0.01879259300000058,
+        0.016785287999994125,
+        0.017427185999991934
+      ],
+      "median_seconds": 0.016664925,
+      "mb_per_second": 1914.675583598486,
+      "iterations": 315,
+      "nodes": 2720655,
+      "input_bytes": 101295,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "mixed-100k",
+      "mode": "reuse",
+      "sha256": "b9b234f1e359ac2558b9563b764287c405bc357d2a02556a91b11783511578d5",
+      "seconds": [
+        0.025574954,
+        0.026173194,
+        0.02663641,
+        0.026227614,
+        0.024965501
+      ],
+      "process_seconds": [
+        0.026545625999972344,
+        0.02733385400000543,
+        0.027729878000002373,
+        0.027256930999982387,
+        0.02618556200002331
+      ],
+      "median_seconds": 0.026173194,
+      "mb_per_second": 1219.1070375285492,
+      "iterations": 315,
+      "nodes": 2720655,
+      "input_bytes": 101295,
+      "output_bytes": 0
+    },
+    {
+      "implementation": "nia",
+      "corpus": "mixed-100k",
+      "mode": "write",
+      "sha256": "b9b234f1e359ac2558b9563b764287c405bc357d2a02556a91b11783511578d5",
+      "seconds": [
+        0.01726734,
+        0.014559037,
+        0.014504966,
+        0.014610587,
+        0.016203483
+      ],
+      "process_seconds": [
+        0.01831560499999796,
+        0.015643603000000894,
+        0.015512653999991244,
+        0.015585901000008562,
+        0.017223051999991412
+      ],
+      "median_seconds": 0.014610587,
+      "mb_per_second": 2183.8906951513995,
+      "iterations": 315,
+      "nodes": 2720655,
+      "input_bytes": 101295,
+      "output_bytes": 31907925
+    },
+    {
+      "implementation": "serde",
+      "corpus": "mixed-100k",
+      "mode": "write",
+      "sha256": "b9b234f1e359ac2558b9563b764287c405bc357d2a02556a91b11783511578d5",
+      "seconds": [
+        0.026679377,
+        0.026433734,
+        0.026607769,
+        0.026575972,
+        0.026714125
+      ],
+      "process_seconds": [
+        0.028027731999998196,
+        0.02789990899998429,
+        0.028065811000004715,
+        0.028041698000009774,
+        0.0279658999999981
+      ],
+      "median_seconds": 0.026607769,
+      "mb_per_second": 1199.1958063075488,
+      "iterations": 315,
+      "nodes": 2720655,
+      "input_bytes": 101295,
+      "output_bytes": 31907925
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "mixed-100k",
+      "mode": "write",
+      "sha256": "b9b234f1e359ac2558b9563b764287c405bc357d2a02556a91b11783511578d5",
+      "seconds": [
+        0.018903958,
+        0.016619799,
+        0.017104544,
+        0.019737891,
+        0.01708203
+      ],
+      "process_seconds": [
+        0.019732924999999568,
+        0.01747157500000185,
+        0.01795534000001453,
+        0.020564535000005435,
+        0.017991783999974587
+      ],
+      "median_seconds": 0.017104544,
+      "mb_per_second": 1865.4648144960777,
+      "iterations": 315,
+      "nodes": 2720655,
+      "input_bytes": 101295,
+      "output_bytes": 31907925
+    },
+    {
+      "implementation": "nia",
+      "corpus": "mixed-100k",
+      "mode": "roundtrip",
+      "sha256": "b9b234f1e359ac2558b9563b764287c405bc357d2a02556a91b11783511578d5",
+      "seconds": [
+        0.049582874,
+        0.046411025,
+        0.047489069,
+        0.047029005,
+        0.048072743
+      ],
+      "process_seconds": [
+        0.050779222000016944,
+        0.047499740999995765,
+        0.0485931780000044,
+        0.0483026940000002,
+        0.04931720400000472
+      ],
+      "median_seconds": 0.047489069,
+      "mb_per_second": 671.9004114399463,
+      "iterations": 315,
+      "nodes": 2720655,
+      "input_bytes": 101295,
+      "output_bytes": 31907925
+    },
+    {
+      "implementation": "serde",
+      "corpus": "mixed-100k",
+      "mode": "roundtrip",
+      "sha256": "b9b234f1e359ac2558b9563b764287c405bc357d2a02556a91b11783511578d5",
+      "seconds": [
+        0.176372674,
+        0.174359889,
+        0.173410263,
+        0.169919729,
+        0.175271015
+      ],
+      "process_seconds": [
+        0.1778073309999968,
+        0.17572960999999054,
+        0.17474043100000358,
+        0.17231231399998137,
+        0.17665177099999596
+      ],
+      "median_seconds": 0.174359889,
+      "mb_per_second": 183.00037458729975,
+      "iterations": 315,
+      "nodes": 2720655,
+      "input_bytes": 101295,
+      "output_bytes": 31907925
+    },
+    {
+      "implementation": "yyjson",
+      "corpus": "mixed-100k",
+      "mode": "roundtrip",
+      "sha256": "b9b234f1e359ac2558b9563b764287c405bc357d2a02556a91b11783511578d5",
+      "seconds": [
+        0.051536082,
+        0.053050546,
+        0.050427976,
+        0.054747337,
+        0.051801312
+      ],
+      "process_seconds": [
+        0.05238307599998393,
+        0.053954329999982065,
+        0.051406248999995796,
+        0.055674060999990616,
+        0.052650343999999905
+      ],
+      "median_seconds": 0.051801312,
+      "mb_per_second": 615.9675067689404,
+      "iterations": 315,
+      "nodes": 2720655,
+      "input_bytes": 101295,
+      "output_bytes": 31907925
+    }
+  ]
+}

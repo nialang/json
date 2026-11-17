@@ -47,8 +47,46 @@ fun port(allocator: &mut mem::Allocator, text: &[u8]) ?u64 {
   be looked up by [RFC 6901](https://www.rfc-editor.org/rfc/rfc6901) JSON
   Pointer, and written to any `std::io::Writer` without allocating.
 - **Speed.** Parsing reads plain text sixteen bytes at a time and decodes
-  strings in place. See [docs/benchmarks.md](docs/benchmarks.md) for how it
-  compares with yyjson and serde_json.
+  strings in place. See [Performance](#performance) for how it compares with
+  yyjson and serde_json.
+
+## Performance
+
+The charts compare json with [yyjson](https://github.com/ibireme/yyjson), one
+of the fastest C libraries with the same kind of document, and with
+[serde_json](https://github.com/serde-rs/json), Rust's common JSON library.
+Each bar is a throughput as a multiple of yyjson's on the same input; the
+dashed line is yyjson.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/parse-dark.svg">
+  <img alt="Parsing throughput relative to yyjson: json 0.55x to 1.71x, serde_json 0.08x to 1.03x" src="docs/images/parse.svg">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/write-dark.svg">
+  <img alt="Writing throughput relative to yyjson: json 0.50x to 1.17x, serde_json 0.10x to 0.64x" src="docs/images/write.svg">
+</picture>
+
+In MB/s of input, on a few of the corpora:
+
+| Corpus | Contents | json | yyjson | serde_json |
+| --- | --- | ---: | ---: | ---: |
+| `records-100k` parse | an array of small objects | 1335 | 1871 | 170 |
+| `records-pretty` parse | the same, indented | 2000 | 2879 | 307 |
+| `integers-100k` parse | an array of integers | 1167 | 1514 | 424 |
+| `strings-100k` parse | long ASCII strings | 7491 | 4393 | 4509 |
+| `mixed-100k` parse | messages shaped like an API feed | 1265 | 1915 | 225 |
+| `records-100k` write | compact text into memory | 1512 | 2016 | 931 |
+| `mixed-100k` write | compact text into memory | 2184 | 1865 | 1199 |
+
+On structured documents json parses at 55 to 95 percent of yyjson's speed and
+leads it on long strings; both are three to ten times as fast as serde_json,
+which builds a tree of separately allocated values. The numbers come from one
+machine (Intel Core i9-13900HX, Linux under WSL 2) and say how the libraries
+compare there, not how fast any of them is in general.
+[docs/benchmarks.md](docs/benchmarks.md) has every corpus, the method, the
+versions measured, and how to run the comparison yourself.
 
 ## Installation
 
